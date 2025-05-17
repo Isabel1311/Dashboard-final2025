@@ -53,12 +53,8 @@ else:
         df["IMPORTE"] = pd.to_numeric(df.get("IMPORTE"), errors="coerce")
 
         st.sidebar.header("Filtros")
-        tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist() if "TIPO DE ORDEN" in df.columns else []
-        if tipo_orden_opts and "CORRECTIVO" in tipo_orden_opts:
-            tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=["CORRECTIVO"])
-        else:
-            tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts)
-
+        tipo_orden = df["TIPO DE ORDEN"].dropna().unique().tolist() if "TIPO DE ORDEN" in df.columns else []
+        tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden, default=["CORRECTIVO"])
         anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
         anio = st.sidebar.selectbox("Año", sorted(anios_disponibles, reverse=True))
         meses = st.sidebar.multiselect("Mes(es)", list(range(1, 13)), default=[datetime.now().month])
@@ -114,7 +110,6 @@ else:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
                     tabla_importes.to_excel(writer, sheet_name="Importes Totales")
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
-                    writer.save()
                 st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
 
             with tabs[2]:
