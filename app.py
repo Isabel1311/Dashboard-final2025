@@ -128,26 +128,26 @@ else:
                 st.plotly_chart(fig2, use_container_width=True)
 
                st.subheader("📅 Tendencia de creación de órdenes por mes")
-df_filtrado["MES"] = df_filtrado["FECHA DE CREACIÓN"].dt.month
-df_filtrado["AÑO"] = df_filtrado["FECHA DE CREACIÓN"].dt.year
-tendencia = df_filtrado.groupby(["AÑO", "MES"]).size().reset_index(name="FOLIOS")
+                df_filtrado["MES"] = df_filtrado["FECHA DE CREACIÓN"].dt.month
+                df_filtrado["AÑO"] = df_filtrado["FECHA DE CREACIÓN"].dt.year
+                tendencia = df_filtrado.groupby(["AÑO", "MES"]).size().reset_index(name="FOLIOS")
 
-fig3 = px.line(
-    tendencia,
-    x="MES",
-    y="FOLIOS",
-    color="AÑO",
-    markers=True,
-    title="Tendencia de creación de órdenes por mes",
-    labels={"MES": "Mes", "FOLIOS": "Cantidad de Órdenes", "AÑO": "Año"},
-)
-
-fig3.update_traces(
-    text=tendencia["FOLIOS"],
-    textposition="top center",
-    mode="lines+markers+text"
-)
-fig3.update_layout(xaxis=dict(tickmode="linear"))
-st.plotly_chart(fig3, use_container_width=True)
+                fig3 = px.line(
+                    tendencia,
+                    x="MES",
+                    y="FOLIOS",
+                    color="AÑO",
+                    markers=True,
+                    title="Tendencia de creación de órdenes por mes",
+                    labels={"MES": "Mes", "FOLIOS": "Cantidad de Órdenes", "AÑO": "Año"},
+                )
+                
+                fig3.update_traces(
+                    text=tendencia["FOLIOS"],
+                    textposition="top center",
+                    mode="lines+markers+text"
+                )
+                fig3.update_layout(xaxis=dict(tickmode="linear"))
+                st.plotly_chart(fig3, use_container_width=True)
 
 
