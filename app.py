@@ -41,7 +41,6 @@ if not st.session_state.authenticated:
                 st.rerun()
             else:
                 st.error("Credenciales inválidas. Intenta de nuevo.")
-
 else:
     st.title("🔧 Dashboard de Mantenimiento Correctivo 2025")
     archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
@@ -73,7 +72,7 @@ else:
         if df_filtrado.empty:
             st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
         else:
-            tabs = st.tabs(["📌 KPIs del Mes", "📊 Tablas Resumen", "📋 Detalle por Proveedor", "📈 Visualizaciones"])
+            tabs = st.tabs(["📊 Indicadores y Tablas", "📋 Detalle por Proveedor", "📈 Visualizaciones"])
 
             with tabs[0]:
                 st.subheader("📌 Indicadores clave del mes")
@@ -88,14 +87,13 @@ else:
                 col3.metric("🥇 Proveedor con Más Órdenes", proveedor_top)
                 col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
 
-            with tabs[1]:
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
                 tabla_ordenes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="ORDEN", aggfunc="count", fill_value=0)
                 tabla_ordenes["TOTAL_ORDENES"] = tabla_ordenes.sum(axis=1)
                 fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
-                st.dataframe(tabla_ordenes)
+                st.dataframe(tabla_ordenes.style.apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
 
                 st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
                 tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
@@ -103,7 +101,7 @@ else:
                 fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
-                st.dataframe(tabla_importes)
+                st.dataframe(tabla_importes.style.format("${:,.0f}").apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
 
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -112,35 +110,21 @@ else:
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
                 st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
 
-            with tabs[2]:
+            with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
                 st.dataframe(df_filtrado)
 
-            with tabs[3]:
+            with tabs[2]:
                 st.subheader("📈 Órdenes por Estatus")
                 grafico1 = df_filtrado["ESTATUS DE USUARIO"].value_counts().reset_index()
                 grafico1.columns = ["Estatus", "Cantidad"]
-                fig = px.bar(
-                    grafico1,
-                    x="Estatus",
-                    y="Cantidad",
-                    title="Órdenes por Estatus",
-                    color="Cantidad",
-                    text="Cantidad",
-                    labels={"Cantidad": "Cantidad de Órdenes"}
-                )
+                fig = px.bar(grafico1, x="Estatus", y="Cantidad", title="Órdenes por Estatus", color="Cantidad", text="Cantidad", labels={"Cantidad": "Cantidad de Órdenes"})
                 st.plotly_chart(fig, use_container_width=True)
 
                 st.subheader("💸 Importe por Proveedor")
                 grafico2 = df_filtrado.groupby("PROVEEDOR")["IMPORTE"].sum().reset_index().sort_values(by="IMPORTE", ascending=False)
                 grafico2["IMPORTE"] = grafico2["IMPORTE"].round(2)
-                fig2 = px.bar(
-                    grafico2,
-                    x="PROVEEDOR",
-                    y="IMPORTE",
-                    title="Importe Total por Proveedor",
-                    text=grafico2["IMPORTE"].apply(lambda x: f"${x:,.0f}"),
-                    labels={"IMPORTE": "Importe ($MXN)"},
-                    color="IMPORTE"
-                )
+                fig2 = px.bar(grafico2, x="PROVEEDOR", y="IMPORTE", title="Importe Total por Proveedor", text=grafico2["IMPORTE"].apply(lambda x: f"${x:,.0f}"), labels={"IMPORTE": "Importe ($MXN)"}, color="IMPORTE")
                 st.plotly_chart(fig2, use_container_width=True)
+
+
