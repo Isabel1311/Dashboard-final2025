@@ -1,28 +1,31 @@
+
 # Dashboard de Mantenimiento Correctivo
 
-Esta aplicación de Streamlit permite visualizar, analizar y exportar información de órdenes de mantenimiento correctivo desde un archivo Excel.
-
-## Funcionalidades
-
-- Inicio de sesión
-- Filtros por tipo de orden, año, mes, proveedor y estatus
-- KPIs mensuales
-- Tablas dinámicas de órdenes e importes
-- Exportación a Excel
-- Gráficas interactivas con Plotly
+Este proyecto es una aplicación web desarrollada con Streamlit para el análisis y visualización de órdenes de mantenimiento correctivo.
 
 ## Requisitos
 
-Instala las dependencias:
+- Python 3.8 o superior
+- pip
+
+## Instalación
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Uso
-
-Ejecuta localmente:
+## Ejecución
 
 ```bash
 streamlit run app.py
 ```
+
+## Funcionalidades
+
+- Login seguro
+- Filtros por tipo de orden, año, mes, proveedor y estatus
+- KPIs del mes
+- Tablas resumen y de detalle
+- Visualizaciones interactivas con Plotly
+- Exportación a Excel
+
