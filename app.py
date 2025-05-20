@@ -195,11 +195,11 @@ else:
             with tabs[3]:
                 st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
             
-                if "ESTATUS DE SISTEMA" in df_filtrado.columns:
+                if "ESTATUS DE USUARIO" in df_filtrado.columns:
                     tabla_estatus = pd.pivot_table(
                         df_filtrado,
                         index="PROVEEDOR",
-                        columns="ESTATUS DE SISTEMA",
+                        columns="ESTATUS DE USUARIO",
                         values="ORDEN",
                         aggfunc="count",
                         fill_value=0
@@ -222,4 +222,4 @@ else:
             
                     st.dataframe(tabla_estatus[[*columnas_porcentaje, "Cumple Meta"]])
                 else:
-                    st.warning("⚠️ No se encontró la columna 'ESTATUS DE SISTEMA' en el archivo cargado.")
+                    st.warning("⚠️ No se encontró la columna 'ESTATUS DE USUARIO' en el archivo cargado.")
