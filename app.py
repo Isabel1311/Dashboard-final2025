@@ -193,8 +193,7 @@ else:
 
 
            with tabs[3]:
-                st.subheader("🎯 Evaluación de cumplimiento por estatus de usuario")
-
+                st.subheader("🎯 Evaluación de cumplimiento por estatus de Usuario")
                 try:
                     if "ESTATUS DE USUARIO" in df_filtrado.columns and "ORDEN" in df_filtrado.columns and not df_filtrado.empty:
                         estatus_col = "ESTATUS DE USUARIO"
@@ -216,7 +215,7 @@ else:
                                 tabla_estatus[f"% {col}"] = 0
 
                         tabla_estatus["% Visado+Auto"] = tabla_estatus["% VISADO"] + tabla_estatus["% AUTO"]
-                        tabla_estatus["Cumple Meta"] = (tabla_estatus["% ATEN"] <= 5) & (tabla_estatus["% Visado+Auto"] >= 90)
+                        tabla_estatus["Cumple Meta"] = (tabla_estatus["% ATEN"] <= 15) & (tabla_estatus["% Visado+Auto"] >= 85)
                         tabla_estatus["Cumple Meta"] = tabla_estatus["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
 
                         columnas_porcentaje = [c for c in tabla_estatus.columns if "%" in c]
