@@ -164,3 +164,30 @@ else:
                 )
                 fig3.update_layout(xaxis=dict(tickmode="linear"))
                 st.plotly_chart(fig3, use_container_width=True)
+                
+                st.subheader("📆 Tendencia diaria de creación de órdenes")
+                df_filtrado["DIA"] = df_filtrado["FECHA DE CREACIÓN"].dt.date
+                tendencia_dia = df_filtrado.groupby("DIA").size().reset_index(name="FOLIOS")
+
+                fig_dia = px.line(
+                    tendencia_dia,
+                    x="DIA",
+                    y="FOLIOS",
+                    markers=True,
+                    title="Tendencia diaria de creación de órdenes",
+                    labels={"DIA": "Fecha", "FOLIOS": "Cantidad de Órdenes"}
+                )
+
+                fig_dia.update_traces(
+                    text=tendencia_dia["FOLIOS"],
+                    textposition="top center",
+                    mode="lines+markers+text"
+                )
+
+                fig_dia.update_layout(
+                    xaxis=dict(tickformat="%d-%b"),
+                    hovermode="x unified"
+                )
+
+                st.plotly_chart(fig_dia, use_container_width=True)
+
