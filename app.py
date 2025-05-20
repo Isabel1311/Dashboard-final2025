@@ -193,35 +193,28 @@ else:
 
 
             with tabs[3]:
-                st.subheader("🎯 Evaluación de cumplimiento por estatus de Usuario")
-            
-                if "ESTATUS DE USUARIO" in df_filtrado.columns:
-                    tabla_estatus = pd.pivot_table(
-                        df_filtrado,
-                        index="PROVEEDOR",
-                        columns="ESTATUS DE USUARIO",
-                        values="ORDEN",
-                        aggfunc="count",
-                        fill_value=0
-                    )
-            
-                    tabla_estatus["TOTAL"] = tabla_estatus.sum(axis=1)
-            
-                    for col in ["ATEN", "VISADO", "AUTO"]:
-                        if col in tabla_estatus.columns:
-                            tabla_estatus[f"% {col}"] = (tabla_estatus[col] / tabla_estatus["TOTAL"]) * 100
-                        else:
-                            tabla_estatus[f"% {col}"] = 0
-            
-                    tabla_estatus["% Visado+Auto"] = tabla_estatus["% VISADO"] + tabla_estatus["% AUTO"]
-                    tabla_estatus["Cumple Meta"] = (tabla_estatus["% ATEN"] <= 15) & (tabla_estatus["% Visado+Auto"] >= 85)
-                    tabla_estatus["Cumple Meta"] = tabla_estatus["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
-            
-                    columnas_porcentaje = [c for c in tabla_estatus.columns if "%" in c]
-                    tabla_estatus[columnas_porcentaje] = tabla_estatus[columnas_porcentaje].round(2)
-            
-                    st.dataframe(tabla_estatus[[*columnas_porcentaje, "Cumple Meta"]])
-                else:
-                    st.warning("⚠️ No se encontró la columna 'ESTATUS DE USUARIO' en el archivo cargado.")
+               st.subheader("🎯 Evaluación de metas históricas acumuladas")
+            estatus_col = "ESTATUS DE SISTEMA"
+            if estatus_col in df.columns:
+                tabla_acumulada = df.groupby("PROVEEDOR")[estatus_col].value_counts().unstack(fill_value=0)
+                tabla_acumulada["TOTAL"] = tabla_acumulada.sum(axis=1)
+                for col in ["ATEN", "VISADO", "AUTO"]:
+                    if col not in tabla_acumulada.columns:
+                        tabla_acumulada[col] = 0
+                tabla_acumulada["% ATEN"] = (tabla_acumulada["ATEN"] / tabla_acumulada["TOTAL"]) * 100
+                tabla_acumulada["% VISADO+AUTO"] = ((tabla_acumulada["VISADO"] + tabla_acumulada["AUTO"]) / tabla_acumulada["TOTAL"]) * 100
+
+                meta_aten = (tabla_acumulada["ATEN"].sum() / tabla_acumulada["TOTAL"].sum()) * 100
+                meta_visado_auto = ((tabla_acumulada["VISADO"].sum() + tabla_acumulada["AUTO"].sum()) / tabla_acumulada["TOTAL"].sum()) * 100
+
+                tabla_acumulada["Cumple Meta"] = (
+                    (tabla_acumulada["% ATEN"] <= meta_aten) &
+                    (tabla_acumulada["% VISADO+AUTO"] >= meta_visado_auto)
+                ).map({True: "✅", False: "❌"})
+
+                tabla_acumulada = tabla_acumulada[["% ATEN", "% VISADO+AUTO", "Cumple Meta"]].round(2)
+                st.dataframe(tabla_acumulada)
+
+
 
 
