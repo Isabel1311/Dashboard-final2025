@@ -193,11 +193,11 @@ else:
 
 
            with tabs[3]:
-                st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
+                st.subheader("🎯 Evaluación de cumplimiento por estatus de usuario")
 
                 try:
-                    if "ESTATUS DE SISTEMA" in df_filtrado.columns and "ORDEN" in df_filtrado.columns and not df_filtrado.empty:
-                        estatus_col = "ESTATUS DE SISTEMA"
+                    if "ESTATUS DE USUARIO" in df_filtrado.columns and "ORDEN" in df_filtrado.columns and not df_filtrado.empty:
+                        estatus_col = "ESTATUS DE USUARIO"
                         tabla_estatus = pd.pivot_table(
                             df_filtrado,
                             index="PROVEEDOR",
