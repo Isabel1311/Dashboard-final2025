@@ -191,39 +191,32 @@ else:
 
                 st.plotly_chart(fig_dia, use_container_width=True)
 
+             with tabs[3]:
+                st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
 
-           with tabs[3]:
-                st.subheader("🎯 Evaluación de cumplimiento por estatus de Usuario")
-                try:
-                    if "ESTATUS DE USUARIO" in df_filtrado.columns and "ORDEN" in df_filtrado.columns and not df_filtrado.empty:
-                        estatus_col = "ESTATUS DE USUARIO"
-                        tabla_estatus = pd.pivot_table(
-                            df_filtrado,
-                            index="PROVEEDOR",
-                            columns=estatus_col,
-                            values="ORDEN",
-                            aggfunc="count",
-                            fill_value=0
-                        )
+                if "ESTATUS DE SISTEMA" in df_filtrado.columns and not df_filtrado.empty:
+                    tabla_estatus = df_filtrado.groupby(["PROVEEDOR", "ESTATUS DE SISTEMA"]).agg(FOLIOS=("ORDEN", "count")).reset_index()
+                    total_por_proveedor = tabla_estatus.groupby("PROVEEDOR")["FOLIOS"].sum().reset_index(name="TOTAL")
+                    tabla_estatus = pd.merge(tabla_estatus, total_por_proveedor, on="PROVEEDOR")
 
-                        tabla_estatus["TOTAL"] = tabla_estatus.sum(axis=1)
+                    pivot = tabla_estatus.pivot(index="PROVEEDOR", columns="ESTATUS DE SISTEMA", values="FOLIOS").fillna(0)
+                    pivot["TOTAL"] = pivot.sum(axis=1)
 
-                        for col in ["ATEN", "VISADO", "AUTO"]:
-                            if col in tabla_estatus.columns:
-                                tabla_estatus[f"% {col}"] = (tabla_estatus[col] / tabla_estatus["TOTAL"]) * 100
-                            else:
-                                tabla_estatus[f"% {col}"] = 0
+                    for col in ["ATEN", "VISA", "AUTO"]:
+                        if col in pivot.columns:
+                            pivot[f"% {col}"] = (pivot[col] / pivot["TOTAL"]) * 100
+                        else:
+                            pivot[f"% {col}"] = 0
 
-                        tabla_estatus["% Visado+Auto"] = tabla_estatus["% VISADO"] + tabla_estatus["% AUTO"]
-                        tabla_estatus["Cumple Meta"] = (tabla_estatus["% ATEN"] <= 15) & (tabla_estatus["% Visado+Auto"] >= 85)
-                        tabla_estatus["Cumple Meta"] = tabla_estatus["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
+                    pivot["% Visado+Auto"] = pivot.get("% VISA", 0) + pivot.get("% AUTO", 0)
+                    pivot["Cumple Meta"] = (pivot.get("% ATEN", 0) <= 15) & (pivot["% Visado+Auto"] >= 85)
+                    pivot["Cumple Meta"] = pivot["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
 
-                        columnas_porcentaje = [c for c in tabla_estatus.columns if "%" in c]
-                        tabla_estatus[columnas_porcentaje] = tabla_estatus[columnas_porcentaje].round(2)
+                    columnas_porcentaje = [c for c in pivot.columns if "%" in c]
+                    pivot[columnas_porcentaje] = pivot[columnas_porcentaje].round(2)
 
-                        st.dataframe(tabla_estatus[[*columnas_porcentaje, "Cumple Meta"]])
-                    else:
-                        st.warning("No se encontraron datos suficientes o las columnas necesarias no están disponibles.")
-                except Exception as e:
-                    st.error(f"Ocurrió un error al generar la tabla de metas: {e}")
-
+                    st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]])
+                else:
+                    st.warning("No se encontraron datos suficientes o la columna 'ESTATUS DE SISTEMA' no está disponible.")
+           
+                     
