@@ -194,7 +194,7 @@ else:
                 with tabs[3]:
                      st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
 
-                        if "ESTATUS DE SISTEMA" in df_filtrado.columns and not df_filtrado.empty:
+                     if "ESTATUS DE SISTEMA" in df_filtrado.columns and not df_filtrado.empty:
                             tabla_estatus = df_filtrado.groupby(["PROVEEDOR", "ESTATUS DE SISTEMA"]).agg(FOLIOS=("ORDEN", "count")).reset_index()
                             total_por_proveedor = tabla_estatus.groupby("PROVEEDOR")["FOLIOS"].sum().reset_index(name="TOTAL")
                             tabla_estatus = pd.merge(tabla_estatus, total_por_proveedor, on="PROVEEDOR")
