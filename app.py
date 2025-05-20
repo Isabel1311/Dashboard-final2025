@@ -194,7 +194,7 @@ else:
 
             with tabs[3]:
                st.subheader("🎯 Evaluación de metas históricas acumuladas")
-                estatus_col = "ESTATUS DE SISTEMA"
+               estatus_col = "ESTATUS DE SISTEMA"
                 if estatus_col in df.columns:
                     tabla_acumulada = df.groupby("PROVEEDOR")[estatus_col].value_counts().unstack(fill_value=0)
                     tabla_acumulada["TOTAL"] = tabla_acumulada.sum(axis=1)
