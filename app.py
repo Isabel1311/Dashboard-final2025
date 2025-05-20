@@ -196,11 +196,11 @@ else:
                st.subheader("🎯 Evaluación de metas históricas acumuladas")
                 estatus_col = "ESTATUS DE SISTEMA"
                 if estatus_col in df.columns:
-                tabla_acumulada = df.groupby("PROVEEDOR")[estatus_col].value_counts().unstack(fill_value=0)
-                tabla_acumulada["TOTAL"] = tabla_acumulada.sum(axis=1)
-                for col in ["ATEN", "VISADO", "AUTO"]:
-                    if col not in tabla_acumulada.columns:
-                        tabla_acumulada[col] = 0
+                    tabla_acumulada = df.groupby("PROVEEDOR")[estatus_col].value_counts().unstack(fill_value=0)
+                    tabla_acumulada["TOTAL"] = tabla_acumulada.sum(axis=1)
+                    for col in ["ATEN", "VISADO", "AUTO"]:
+                        if col not in tabla_acumulada.columns:
+                            tabla_acumulada[col] = 0
                 tabla_acumulada["% ATEN"] = (tabla_acumulada["ATEN"] / tabla_acumulada["TOTAL"]) * 100
                 tabla_acumulada["% VISADO+AUTO"] = ((tabla_acumulada["VISADO"] + tabla_acumulada["AUTO"]) / tabla_acumulada["TOTAL"]) * 100
 
