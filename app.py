@@ -191,6 +191,7 @@ else:
 
                 st.plotly_chart(fig_dia, use_container_width=True)
 
+
             with tabs[3]:
                 st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
                 tabla_estatus = pd.pivot_table(
@@ -213,4 +214,3 @@ else:
                 columnas_porcentaje = [c for c in tabla_estatus.columns if "%" in c]
                 tabla_estatus[columnas_porcentaje] = tabla_estatus[columnas_porcentaje].round(2)
                 st.dataframe(tabla_estatus[[*columnas_porcentaje, "Cumple Meta"]])
-
