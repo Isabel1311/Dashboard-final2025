@@ -191,30 +191,71 @@ else:
 
                 st.plotly_chart(fig_dia, use_container_width=True)
 
-            with tabs[3]:
-                st.subheader("🎯 Evaluación de cumplimiento por estatus de sistema")
-
-                if "ESTATUS DE SISTEMA" in df_filtrado.columns and not df_filtrado.empty:
-                    tabla_estatus = df_filtrado.groupby(["PROVEEDOR", "ESTATUS DE SISTEMA"]).agg(FOLIOS=("ORDEN", "count")).reset_index()
-                    total_por_proveedor = tabla_estatus.groupby("PROVEEDOR")["FOLIOS"].sum().reset_index(name="TOTAL")
-                    tabla_estatus = pd.merge(tabla_estatus, total_por_proveedor, on="PROVEEDOR")
-
-                    pivot = tabla_estatus.pivot(index="PROVEEDOR", columns="ESTATUS DE SISTEMA", values="FOLIOS").fillna(0)
-                    pivot["TOTAL"] = pivot.sum(axis=1)
-
-                    for col in ["ATEN", "VISA", "AUTO"]:
-                        if col in pivot.columns:
-                            pivot[f"% {col}"] = (pivot[col] / pivot["TOTAL"]) * 100
-                        else:
-                            pivot[f"% {col}"] = 0
-
-                    pivot["% Visado+Auto"] = pivot.get("% VISA", 0) + pivot.get("% AUTO", 0)
-                    pivot["Cumple Meta"] = (pivot.get("% ATEN", 0) <= 15) & (pivot["% Visa+Auto"] >= 85)
-                    pivot["Cumple Meta"] = pivot["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
-
-                    columnas_porcentaje = [c for c in pivot.columns if "%" in c]
-                    pivot[columnas_porcentaje] = pivot[columnas_porcentaje].round(2)
-
-                    st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]])
-                else:
-                    st.warning("No se encontraron datos suficientes o la columna 'ESTATUS DE SISTEMA' no está disponible.")
+    with st.expander("📊 Análisis Financiero por Elemento PEP", expanded=True):
+        st.markdown("### KPIs Financieros")
+    
+        presupuesto_mensual = 4_000_000
+        total_gastado = df_filtrado["IMPORTE"].sum()
+        porcentaje_utilizado = (total_gastado / presupuesto_mensual) * 100 if presupuesto_mensual > 0 else 0
+        pep_mas_costoso = (
+            df_filtrado.groupby("ELEMENTO PEP")["IMPORTE"].sum().idxmax()
+            if not df_filtrado.empty else ""
+        )
+        ubicacion_mayor_gasto = (
+            df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().idxmax()
+            if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns and not df_filtrado.empty else ""
+        )
+    
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        kpi1.metric("💸 Total gastado", f"${total_gastado:,.0f}")
+        kpi2.metric("📊 % presupuesto usado", f"{porcentaje_utilizado:.1f}%")
+        kpi3.metric("🏆 Elemento PEP más costoso", f"{pep_mas_costoso}")
+        kpi4.metric("🔍 Ubicación técnica con mayor gasto", f"{ubicacion_mayor_gasto}")
+    
+        if porcentaje_utilizado > 100:
+            st.error("🚨 ¡Se ha excedido el presupuesto mensual!")
+        else:
+            st.success("Presupuesto dentro del límite. ¡Buen trabajo!")
+    
+        st.markdown("---")
+        st.subheader("Órdenes por Elemento PEP")
+        ordenes_pep = df_filtrado["ELEMENTO PEP"].value_counts().reset_index()
+        ordenes_pep.columns = ["Elemento PEP", "Cantidad de Órdenes"]
+    
+        fig_ordenes = px.bar(
+            ordenes_pep,
+            x="Elemento PEP",
+            y="Cantidad de Órdenes",
+            text="Cantidad de Órdenes",
+            color="Cantidad de Órdenes",
+            title="Órdenes por Elemento PEP"
+        )
+        fig_ordenes.update_traces(textposition="outside")
+        fig_ordenes.update_layout(xaxis_title="Elemento PEP", yaxis_title="Órdenes", showlegend=False)
+        st.plotly_chart(fig_ordenes, use_container_width=True)
+    
+        st.markdown("---")
+        st.subheader("Importe acumulado por Elemento PEP")
+        importes_pep = df_filtrado.groupby("ELEMENTO PEP")["IMPORTE"].sum().reset_index().sort_values(by="IMPORTE", ascending=False)
+        importes_pep["IMPORTE"] = importes_pep["IMPORTE"].round(2)
+    
+        fig_importes = px.bar(
+            importes_pep,
+            x="ELEMENTO PEP",
+            y="IMPORTE",
+            text=importes_pep["IMPORTE"].apply(lambda x: f"${x:,.0f}"),
+            color="IMPORTE",
+            title="Importe acumulado por Elemento PEP"
+        )
+        fig_importes.update_traces(textposition="outside")
+        fig_importes.update_layout(xaxis_title="Elemento PEP", yaxis_title="Importe ($MXN)", showlegend=False)
+        st.plotly_chart(fig_importes, use_container_width=True)
+    
+        st.markdown("---")
+        st.markdown("#### Top ubicaciones técnicas por gasto (alerta si alguna excede el presupuesto mensual)")
+        if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns:
+            ubic_gasto = df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().reset_index()
+            ubic_gasto["status"] = ubic_gasto["IMPORTE"].apply(lambda x: "🔥 Excedido" if x > presupuesto_mensual else "✅ OK")
+            st.dataframe(ubic_gasto.sort_values(by="IMPORTE", ascending=False).round(2), use_container_width=True)
+    
+                
