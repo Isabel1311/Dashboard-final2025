@@ -90,7 +90,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # Calcula la tabla de recuento (pivot original)
+               # Calcula la tabla de recuento (pivot original)
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -104,33 +104,26 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
                 
-                # Ordena columnas para visualización
+                # Intercalar columnas con porcentajes formateados como texto
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
-                # Intercala columnas originales y de porcentaje
                 cols_intercaladas = []
                 for c in orden:
                     cols_intercaladas.append(c)
                     col_pct = f"% {c}"
-                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
+                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2).astype(str) + "%"
+                    tabla_ordenes[col_pct] = tabla_ordenes[col_pct].replace("nan%", "")  # quita nan%
                     cols_intercaladas.append(col_pct)
                 cols_intercaladas.append("TOTAL_ORDENES")
-                
-                # Reordena
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
                 
-                # Formatea porcentajes como texto con %
-                def format_col(val, col):
-                    if col.startswith("%"):
-                        return f"{val:.2f}%" if val != 0 else ""
-                    else:
-                        return int(val) if pd.notnull(val) else ""
-                
+                # Muestra la tabla
                 st.dataframe(
-                    tabla_ordenes.style.format(format_col, subset=tabla_ordenes.columns)
-                    .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
+                    tabla_ordenes.style.apply(
+                        lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1
+                    )
                 )
                 
-                # Exportar tabla a Excel igualita
+                # Exportar a Excel (se verá igual)
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
@@ -141,6 +134,7 @@ else:
                     file_name="tabla_recuento_con_porcentajes.xlsx",
                     mime="application/vnd.ms-excel"
                 )
+
 
 # ---- Detalle por proveedor
             with tabs[1]:
