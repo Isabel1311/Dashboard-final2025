@@ -73,7 +73,13 @@ else:
         if df_filtrado.empty:
             st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
         else:
-            tabs = st.tabs(["📊 Indicadores y Tablas", "📋 Detalle por Proveedor", "📈 Visualizaciones","💸 Análisis Financiero PEP", "🎯 Metas y Cumplimiento"])
+            tabs = st.tabs([
+                    "📊 Indicadores y Tablas",
+                    "📋 Detalle por Proveedor",
+                    "📈 Visualizaciones",
+                    "💸 Análisis Financiero PEP",
+                    "🎯 Metas y Cumplimiento"
+                ])
 
             with tabs[0]:
                 st.subheader("📌 Indicadores clave del mes")
@@ -150,7 +156,7 @@ else:
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
                 st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
 
-# ---- Detalle por proveedor
+            # ---- Detalle por proveedor
             with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
                 st.dataframe(df_filtrado)
