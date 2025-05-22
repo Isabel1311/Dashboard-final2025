@@ -202,7 +202,7 @@ else:
 
             # ---- Análisis financiero PEP
             with tabs[3]:
-                st.markdown("### 💲KPIs Financieros")
+                st.markdown("### 💲 KPIs Financieros")
                 presupuesto_mensual = 4_000_000
                 total_gastado = df_filtrado["IMPORTE"].sum()
                 porcentaje_utilizado = (total_gastado / presupuesto_mensual) * 100 if presupuesto_mensual > 0 else 0
@@ -227,7 +227,7 @@ else:
                     st.success("Presupuesto dentro del límite. ¡Buen trabajo!")
 
                 st.markdown("---")
-                st.subheader("💰Órdenes por Elemento PEP")
+                st.subheader("💰 Órdenes por Elemento PEP")
                 if "ELEMENTO PEP" in df_filtrado.columns:
                     ordenes_pep = df_filtrado["ELEMENTO PEP"].value_counts().reset_index()
                     ordenes_pep.columns = ["Elemento PEP", "Cantidad de Órdenes"]
@@ -244,7 +244,7 @@ else:
                     st.plotly_chart(fig_ordenes, use_container_width=True)
 
                 st.markdown("---")
-                st.subheader("💵Importe acumulado por Elemento PEP")
+                st.subheader("💵 Importe acumulado por Elemento PEP")
                 if "ELEMENTO PEP" in df_filtrado.columns:
                     importes_pep = df_filtrado.groupby("ELEMENTO PEP")["IMPORTE"].sum().reset_index().sort_values(by="IMPORTE", ascending=False)
                     importes_pep["IMPORTE"] = importes_pep["IMPORTE"].round(2)
@@ -261,7 +261,7 @@ else:
                     st.plotly_chart(fig_importes, use_container_width=True)
 
                 st.markdown("---")
-                st.markdown("#### Top ubicaciones técnicas por gasto (alerta si alguna excede el presupuesto mensual)")
+                st.markdown("#### 🗂️ Top ubicaciones técnicas por gasto (alerta si alguna excede el presupuesto mensual)")
                 if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns:
                     ubic_gasto = df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().reset_index()
                     ubic_gasto["status"] = ubic_gasto["IMPORTE"].apply(lambda x: "🔥 Excedido" if x > presupuesto_mensual else "✅ OK")
