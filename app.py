@@ -94,7 +94,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # TABLA DE RECUENTO + SOLO PORCENTAJE, COLOREADO
+                # TABLA DE RECUENTO (con columnas de porcentaje coloreadas)
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -108,7 +108,7 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
 
-                # Genera columnas intercaladas (valor, %)
+                # Columnas intercaladas: valor, % (solo porcentajes, sin barra)
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
                 for c in orden:
@@ -120,7 +120,7 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                # Define función para pintar los porcentajes según su valor
+                # Pintar porcentajes en azul (más fuerte si el valor es alto)
                 def color_percent(val):
                     if val == "" or pd.isnull(val):
                         return ""
@@ -161,19 +161,38 @@ else:
                 )
 
                 st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
-                tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
+                tabla_importes = pd.pivot_table(
+                    df_filtrado,
+                    index="PROVEEDOR",
+                    columns="ESTATUS DE USUARIO",
+                    values="IMPORTE",
+                    aggfunc="sum",
+                    fill_value=0
+                )
                 tabla_importes["IMPORTE_TOTAL"] = tabla_importes.sum(axis=1)
                 fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
-                st.dataframe(tabla_importes.style.format("${:,.0f}"), use_container_width=True)
 
-                buffer = BytesIO()
-                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                    tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
+                # Azul claro SOLO a la fila de totales en importes
+                def row_total_blue_importes(x):
+                    return ['background-color: #dbeafe; font-weight: bold' if x.name == "TOTAL GENERAL" else "" for _ in x]
+
+                st.dataframe(
+                    tabla_importes.style.format("${:,.0f}").apply(row_total_blue_importes, axis=1),
+                    use_container_width=True
+                )
+
+                buffer2 = BytesIO()
+                with pd.ExcelWriter(buffer2, engine='xlsxwriter') as writer:
                     tabla_importes.to_excel(writer, sheet_name="Importes Totales")
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
-                st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
+                st.download_button(
+                    "📥 Descargar reporte de importes (Excel)",
+                    data=buffer2.getvalue(),
+                    file_name="tabla_importes_coloreada.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
 
             # ---- Detalle por proveedor
             with tabs[1]:
