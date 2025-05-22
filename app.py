@@ -121,7 +121,25 @@ else:
                     cols_intercaladas.append(col_pct)
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
+
+                # Ejemplo: todos los porcentajes tienen el patrón "% NOMBRE"
+                cols_pct = [col for col in tabla_ordenes.columns if col.startswith("%")]
                 
+                def highlight_percent(val):
+                    try:
+                        v = float(val.replace('%', ''))
+                    except:
+                        v = np.nan
+                    color = "#2563eb"  # Azul elegante, ajusta si lo prefieres
+                    return f"background: linear-gradient(90deg, {color} {v}%, transparent {v}%);" if pd.notnull(v) else ""
+                
+                # Aplica barras de color SOLO a las columnas de porcentaje
+                st.dataframe(
+                    tabla_ordenes.style
+                        .applymap(highlight_percent, subset=cols_pct)
+                        .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
+                )
+
                 # Muestra la tabla
                 st.dataframe(
                     tabla_ordenes.style.apply(
