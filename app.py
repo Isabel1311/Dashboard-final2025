@@ -1,7 +1,3 @@
-# app.py
-# Ejecuta: pip install streamlit pandas plotly openpyxl xlsxwriter
-# Luego: streamlit run app.py
-
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -98,7 +94,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # TABLA DE RECUENTO + PORCENTAJES + BARRA VISUAL
+                # TABLA DE RECUENTO + SOLO PORCENTAJE, COLOREADO
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -112,33 +108,47 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
 
-                # Crea columnas intercaladas: valor, % y barra
+                # Genera columnas intercaladas (valor, %)
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
-                def barra_visual(pct):
-                    try:
-                        valor = float(str(pct).replace("%", ""))
-                    except:
-                        valor = 0
-                    bloques = int(round(valor / 5))
-                    barra = "█" * bloques + "░" * (10 - bloques)
-                    return f"{pct} {barra}"
-
                 for c in orden:
                     cols_intercaladas.append(c)
                     col_pct = f"% {c}"
                     tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2).astype(str) + "%"
                     tabla_ordenes[col_pct] = tabla_ordenes[col_pct].replace("nan%", "0%")
-                    col_barra = f"Barra {c}"
-                    tabla_ordenes[col_barra] = tabla_ordenes[col_pct].apply(barra_visual)
                     cols_intercaladas.append(col_pct)
-                    cols_intercaladas.append(col_barra)
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                st.dataframe(tabla_ordenes, use_container_width=True)
+                # Define función para pintar los porcentajes según su valor
+                def color_percent(val):
+                    if val == "" or pd.isnull(val):
+                        return ""
+                    try:
+                        pct = float(str(val).replace("%", ""))
+                    except:
+                        pct = 0
+                    if pct >= 70:
+                        return "background-color:#60a5fa; color:white; font-weight:bold"
+                    elif pct >= 40:
+                        return "background-color:#bfdbfe; color:#111827"
+                    elif pct > 0:
+                        return "background-color:#e0e7ef; color:#111827"
+                    else:
+                        return ""
+                cols_pct = [c for c in tabla_ordenes.columns if c.startswith("%")]
 
-                # Exportar a Excel
+                def row_total_blue(x):
+                    return ['background-color: #dbeafe; font-weight: bold' if x.name == "TOTAL GENERAL" else "" for _ in x]
+
+                st.dataframe(
+                    tabla_ordenes.style
+                        .applymap(color_percent, subset=cols_pct)
+                        .apply(row_total_blue, axis=1),
+                    use_container_width=True
+                )
+
+                # Exportar a Excel (sin color, solo datos)
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
@@ -146,7 +156,7 @@ else:
                 st.download_button(
                     "📤 Descargar tabla de recuento (Excel)",
                     data=buffer.getvalue(),
-                    file_name="tabla_recuento_con_barras.xlsx",
+                    file_name="tabla_recuento_coloreada.xlsx",
                     mime="application/vnd.ms-excel"
                 )
 
