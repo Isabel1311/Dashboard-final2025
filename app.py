@@ -121,7 +121,7 @@ else:
                     except:
                         valor = 0
                     bloques = int(round(valor / 5))
-                    barra = "▇" * bloques + " " * (20 - bloques)
+                    barra = "█" * bloques + "░" * (10 - bloques)
                     return f"{pct} {barra}"
 
                 for c in orden:
