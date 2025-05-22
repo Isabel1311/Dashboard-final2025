@@ -139,13 +139,6 @@ else:
                         .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
                 )
 
-                # Muestra la tabla
-                st.dataframe(
-                    tabla_ordenes.style.apply(
-                        lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1
-                    )
-                )
-                
                 # Exportar a Excel (se verá igual)
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
