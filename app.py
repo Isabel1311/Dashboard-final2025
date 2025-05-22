@@ -73,13 +73,7 @@ else:
         if df_filtrado.empty:
             st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
         else:
-            tabs = st.tabs([
-                "📊 Indicadores y Tablas", 
-                "📋 Detalle por Proveedor", 
-                "📈 Visualizaciones", 
-                "💲 Análisis Financiero PEP", 
-                "🎯 Metas y Cumplimiento"
-            ])
+            tabs = st.tabs(["📊 Indicadores y Tablas", "📋 Detalle por Proveedor", "📈 Visualizaciones", "💲 Análisis Financiero PEP", "🎯 Metas y Cumplimiento"])
 
             with tabs[0]:
                 st.subheader("📌 Indicadores clave del mes")
@@ -94,9 +88,9 @@ else:
                 col3.metric("🥇 Proveedor con Más Órdenes", proveedor_top)
                 col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
 
-                st.subheader("📊 Tabla de Recuento por Proveedor y Estatus (con barras visuales de porcentaje)")
+                st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # ---- RECUENTO Y PORCENTAJES CON BARRAS ----
+                # --- Construcción de tabla con porcentajes y barra visual ---
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -110,35 +104,33 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
 
-                # Intercalar columnas porcentaje y barras
+                # Intercalar porcentaje y barra visual como texto
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
-                def barra_txt(val):
+                def barra_visual(pct):
                     try:
-                        pct = float(val)
-                        bloques = int(round(pct/10))
-                        return "█" * bloques + "░" * (10-bloques)
+                        valor = float(str(pct).replace("%", ""))
                     except:
-                        return ""
+                        valor = 0
+                    bloques = int(round(valor / 5))
+                    barra = "▇" * bloques + " " * (20 - bloques)
+                    return f"{barra} {pct}"
+
                 for c in orden:
                     cols_intercaladas.append(c)
                     col_pct = f"% {c}"
-                    col_bar = f"Bar {c}"
-                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
-                    tabla_ordenes[col_bar] = tabla_ordenes[col_pct].apply(barra_txt)
+                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2).astype(str) + "%"
+                    tabla_ordenes[col_pct] = tabla_ordenes[col_pct].replace("nan%", "0%")
+                    col_barra = f"Barra {c}"
+                    tabla_ordenes[col_barra] = tabla_ordenes[col_pct].apply(barra_visual)
                     cols_intercaladas.append(col_pct)
-                    cols_intercaladas.append(col_bar)
+                    cols_intercaladas.append(col_barra)
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                # Formato porcentaje a string para la vista
-                for c in tabla_ordenes.columns:
-                    if "%" in c:
-                        tabla_ordenes[c] = tabla_ordenes[c].astype(str) + "%"
-
                 st.dataframe(tabla_ordenes, use_container_width=True)
 
-                # Exportar a Excel
+                # --- Exportar a Excel ---
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
@@ -146,24 +138,17 @@ else:
                 st.download_button(
                     "📤 Descargar tabla de recuento (Excel)",
                     data=buffer.getvalue(),
-                    file_name="tabla_recuento_con_porcentajes.xlsx",
+                    file_name="tabla_recuento_con_barras.xlsx",
                     mime="application/vnd.ms-excel"
                 )
 
                 st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
-                tabla_importes = pd.pivot_table(
-                    df_filtrado, 
-                    index="PROVEEDOR", 
-                    columns="ESTATUS DE USUARIO", 
-                    values="IMPORTE", 
-                    aggfunc="sum", 
-                    fill_value=0
-                )
+                tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
                 tabla_importes["IMPORTE_TOTAL"] = tabla_importes.sum(axis=1)
                 fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
-                st.dataframe(tabla_importes.style.format("${:,.0f}"), use_container_width=True)
+                st.dataframe(tabla_importes.style.format("${:,.0f}").apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
 
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -172,10 +157,12 @@ else:
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
                 st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
 
+            # ---- Detalle por proveedor
             with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
-                st.dataframe(df_filtrado, use_container_width=True)
+                st.dataframe(df_filtrado)
 
+            # ---- Visualizaciones
             with tabs[2]:
                 st.subheader("📈 Órdenes por Estatus")
                 grafico1 = df_filtrado["ESTATUS DE USUARIO"].value_counts().reset_index()
@@ -229,6 +216,7 @@ else:
                 st.subheader("📆 Tendencia diaria de creación de órdenes")
                 df_filtrado["DIA"] = df_filtrado["FECHA DE CREACIÓN"].dt.date
                 tendencia_dia = df_filtrado.groupby("DIA").size().reset_index(name="FOLIOS")
+
                 fig_dia = px.line(
                     tendencia_dia,
                     x="DIA",
@@ -237,15 +225,18 @@ else:
                     title="Tendencia diaria de creación de órdenes",
                     labels={"DIA": "Fecha", "FOLIOS": "Cantidad de Órdenes"}
                 )
+
                 fig_dia.update_traces(
                     text=tendencia_dia["FOLIOS"],
                     textposition="top center",
                     mode="lines+markers+text"
                 )
+
                 fig_dia.update_layout(
                     xaxis=dict(tickformat="%d-%b"),
                     hovermode="x unified"
                 )
+
                 st.plotly_chart(fig_dia, use_container_width=True)
 
             # ---- Análisis financiero PEP
@@ -262,6 +253,7 @@ else:
                     df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().idxmax()
                     if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns and not df_filtrado.empty else ""
                 )
+
                 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
                 kpi1.metric("💸 Total gastado", f"${total_gastado:,.0f}")
                 kpi2.metric("📊 % presupuesto usado", f"{porcentaje_utilizado:.1f}%")
@@ -333,6 +325,4 @@ else:
                     pivot["Cumple Meta"] = pivot["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
                     columnas_porcentaje = [c for c in pivot.columns if "%" in c]
                     pivot[columnas_porcentaje] = pivot[columnas_porcentaje].round(2)
-                    st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]], use_container_width=True)
-                else:
-                    st.warning("No se encontraron datos suficientes o
+                    st
