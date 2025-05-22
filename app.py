@@ -122,26 +122,26 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-              # COLUMNAS DE PORCENTAJE
-                    cols_pct = [col for col in tabla_ordenes.columns if col.startswith("%")]
-                
-                    def highlight_percent(val):
-                        try:
-                            v = float(val.replace('%', ''))
-                        except:
-                            v = np.nan
-                        color = "#2563eb"
-                        if pd.notnull(v):
-                            return f"background: linear-gradient(90deg, {color} {v}%, transparent {v}%);"
-                        return ""
-                
-                    # Visualización única, profesional, con barras visuales
-                    st.dataframe(
-                        tabla_ordenes.style
-                        .applymap(highlight_percent, subset=cols_pct)
-                        .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1),
-                        use_container_width=True
-                    )
+            # COLUMNAS DE PORCENTAJE
+                cols_pct = [col for col in tabla_ordenes.columns if col.startswith("%")]
+            
+                def highlight_percent(val):
+                    try:
+                        v = float(val.replace('%', ''))
+                    except:
+                        v = np.nan
+                    color = "#2563eb"
+                    if pd.notnull(v):
+                        return f"background: linear-gradient(90deg, {color} {v}%, transparent {v}%);"
+                    return ""
+            
+                # Visualización única, profesional, con barras visuales
+                st.dataframe(
+                    tabla_ordenes.style
+                    .applymap(highlight_percent, subset=cols_pct)
+                    .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1),
+                    use_container_width=True
+                )
 
                 # Exportar a Excel (se verá igual)
                 buffer = BytesIO()
