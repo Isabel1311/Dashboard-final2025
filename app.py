@@ -1,6 +1,6 @@
-# Este archivo usa Streamlit y debe ejecutarse localmente.
-# Ejecuta en tu terminal: pip install -r requirements.txt
-# Luego corre: streamlit run app.py
+# app.py
+# Ejecuta: pip install streamlit pandas plotly openpyxl xlsxwriter
+# Luego: streamlit run app.py
 
 import pandas as pd
 import plotly.express as px
@@ -73,21 +73,14 @@ else:
         if df_filtrado.empty:
             st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
         else:
-            tabs = st.tabs([
-                "📊 Indicadores y Tablas",
-                "📋 Detalle por Proveedor",
-                "📈 Visualizaciones",
-                "💵 Análisis Financiero PEP",
-                "🎯 Metas y Cumplimiento"
-            ])
+            tabs = st.tabs(["📊 Indicadores y Tablas", "📋 Detalle por Proveedor", "📈 Visualizaciones", "🎯 Metas y Cumplimiento"])
 
-            # ---- Indicadores y tablas
             with tabs[0]:
                 st.subheader("📌 Indicadores clave del mes")
                 total_ordenes = df_filtrado.shape[0]
                 total_importe = df_filtrado["IMPORTE"].sum()
-                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax() if not df_filtrado.empty else "-"
-                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique() if df_filtrado["PROVEEDOR"].nunique() > 0 else 0
+                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax()
+                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique()
 
                 col1, col2, col3, col4 = st.columns(4)
                 col1.metric("🗂 Total de Órdenes", f"{total_ordenes:,}")
@@ -96,29 +89,57 @@ else:
                 col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
-                tabla_ordenes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="ORDEN", aggfunc="count", fill_value=0)
+
+                # Construye la tabla de recuento (pivot)
+                tabla_ordenes = pd.pivot_table(
+                    df_filtrado,
+                    index="PROVEEDOR",
+                    columns="ESTATUS DE USUARIO",
+                    values="ORDEN",
+                    aggfunc="count",
+                    fill_value=0
+                )
+
                 tabla_ordenes["TOTAL_ORDENES"] = tabla_ordenes.sum(axis=1)
                 fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
-                st.dataframe(tabla_ordenes.style.apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
 
-                st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
-                tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
-                tabla_importes["IMPORTE_TOTAL"] = tabla_importes.sum(axis=1)
-                fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
-                fila_importe.index = ["TOTAL GENERAL"]
-                tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
-                st.dataframe(tabla_importes.style.format("${:,.0f}").apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
+                # Calcula y agrega el porcentaje enseguida de cada estatus
+                cols = []
+                for col in tabla_ordenes.columns:
+                    if col == "TOTAL_ORDENES":
+                        continue
+                    tabla_ordenes[f"% {col}"] = (tabla_ordenes[col] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
+                for col in tabla_ordenes.columns:
+                    if col.startswith('% '):
+                        continue
+                    cols.append(col)
+                    if f"% {col}" in tabla_ordenes.columns:
+                        cols.append(f"% {col}")
+                cols.append("TOTAL_ORDENES")
+                tabla_ordenes = tabla_ordenes[cols]
 
+                # Muestra tabla en Streamlit
+                st.dataframe(
+                    tabla_ordenes.style
+                        .format("{:.2f}")
+                        .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
+                )
+
+                # Exporta la tabla a Excel (igualita con porcentajes)
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
-                    tabla_importes.to_excel(writer, sheet_name="Importes Totales")
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
-                st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
+                st.download_button(
+                    "📤 Descargar tabla de recuento (Excel)",
+                    data=buffer.getvalue(),
+                    file_name="tabla_recuento_con_porcentajes.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
 
-            # ---- Detalle por proveedor
+# ---- Detalle por proveedor
             with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
                 st.dataframe(df_filtrado)
@@ -227,7 +248,7 @@ else:
                     st.success("Presupuesto dentro del límite. ¡Buen trabajo!")
 
                 st.markdown("---")
-                st.subheader("💰 Órdenes por Elemento PEP")
+                st.subheader("Órdenes por Elemento PEP")
                 if "ELEMENTO PEP" in df_filtrado.columns:
                     ordenes_pep = df_filtrado["ELEMENTO PEP"].value_counts().reset_index()
                     ordenes_pep.columns = ["Elemento PEP", "Cantidad de Órdenes"]
@@ -244,7 +265,7 @@ else:
                     st.plotly_chart(fig_ordenes, use_container_width=True)
 
                 st.markdown("---")
-                st.subheader("💵 Importe acumulado por Elemento PEP")
+                st.subheader("Importe acumulado por Elemento PEP")
                 if "ELEMENTO PEP" in df_filtrado.columns:
                     importes_pep = df_filtrado.groupby("ELEMENTO PEP")["IMPORTE"].sum().reset_index().sort_values(by="IMPORTE", ascending=False)
                     importes_pep["IMPORTE"] = importes_pep["IMPORTE"].round(2)
@@ -261,7 +282,7 @@ else:
                     st.plotly_chart(fig_importes, use_container_width=True)
 
                 st.markdown("---")
-                st.markdown("#### 🗂️ Top ubicaciones técnicas por gasto (alerta si alguna excede el presupuesto mensual)")
+                st.markdown("#### Top ubicaciones técnicas por gasto (alerta si alguna excede el presupuesto mensual)")
                 if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns:
                     ubic_gasto = df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().reset_index()
                     ubic_gasto["status"] = ubic_gasto["IMPORTE"].apply(lambda x: "🔥 Excedido" if x > presupuesto_mensual else "✅ OK")
@@ -276,7 +297,7 @@ else:
                     tabla_estatus = pd.merge(tabla_estatus, total_por_proveedor, on="PROVEEDOR")
                     pivot = tabla_estatus.pivot(index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="FOLIOS").fillna(0)
                     pivot["TOTAL"] = pivot.sum(axis=1)
-                    for col in ["ATEN", "VISA", "AUTO","PRES"]:
+                    for col in ["ATEN", "VISA", "AUTO"]:
                         if col in pivot.columns:
                             pivot[f"% {col}"] = (pivot[col] / pivot["TOTAL"]) * 100
                         else:
