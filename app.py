@@ -122,26 +122,50 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-            # COLUMNAS DE PORCENTAJE
-                cols_pct = [col for col in tabla_ordenes.columns if col.startswith("%")]
-            
-                def highlight_percent(val):
+                                # --- Tabla de recuento con porcentajes y barras de texto ---
+                tabla_ordenes = pd.pivot_table(
+                    df_filtrado,
+                    index="PROVEEDOR",
+                    columns="ESTATUS DE USUARIO",
+                    values="ORDEN",
+                    aggfunc="count",
+                    fill_value=0
+                )
+                tabla_ordenes["TOTAL_ORDENES"] = tabla_ordenes.sum(axis=1)
+                fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
+                fila_total.index = ["TOTAL GENERAL"]
+                tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
+                
+                # Genera columnas de porcentaje y de barra
+                orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
+                cols_intercaladas = []
+                def barra_txt(val):
                     try:
-                        v = float(val.replace('%', ''))
+                        pct = float(val)
+                        bloques = int(round(pct/10))
+                        return "█" * bloques + "░" * (10-bloques)
                     except:
-                        v = np.nan
-                    color = "#2563eb"
-                    if pd.notnull(v):
-                        return f"background: linear-gradient(90deg, {color} {v}%, transparent {v}%);"
-                    return ""
-            
-                # Visualización única, profesional, con barras visuales
+                        return ""
+                
+                for c in orden:
+                    cols_intercaladas.append(c)
+                    col_pct = f"% {c}"
+                    col_bar = f"Bar {c}"
+                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
+                    tabla_ordenes[col_bar] = tabla_ordenes[col_pct].apply(barra_txt)
+                    cols_intercaladas.append(col_pct)
+                    cols_intercaladas.append(col_bar)
+                cols_intercaladas.append("TOTAL_ORDENES")
+                tabla_ordenes = tabla_ordenes[cols_intercaladas]
+                
+                # Muestra la tabla en Streamlit
                 st.dataframe(
-                    tabla_ordenes.style
-                    .applymap(highlight_percent, subset=cols_pct)
-                    .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1),
+                    tabla_ordenes.style.apply(
+                        lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1
+                    ),
                     use_container_width=True
                 )
+
 
                 # Exportar a Excel (se verá igual)
                 buffer = BytesIO()
