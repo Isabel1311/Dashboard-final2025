@@ -3,9 +3,9 @@
 # Luego: streamlit run app.py
 
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import streamlit as st
-import numpy as np
 from datetime import datetime
 from io import BytesIO
 
@@ -78,17 +78,17 @@ else:
                 "📊 Indicadores y Tablas",
                 "📋 Detalle por Proveedor",
                 "📈 Visualizaciones",
-                "📉 Análisis Financiero PEP",
+                "🪙 Análisis Financiero PEP",
                 "🎯 Metas y Cumplimiento"
             ])
 
-            # TAB 0: Indicadores y Tablas
+            # --- Indicadores y tablas principales
             with tabs[0]:
                 st.subheader("📌 Indicadores clave del mes")
                 total_ordenes = df_filtrado.shape[0]
                 total_importe = df_filtrado["IMPORTE"].sum()
-                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax() if not df_filtrado.empty else ""
-                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique() if df_filtrado["PROVEEDOR"].nunique() else 0
+                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax()
+                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique()
 
                 col1, col2, col3, col4 = st.columns(4)
                 col1.metric("🗂 Total de Órdenes", f"{total_ordenes:,}")
@@ -98,7 +98,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # Tabla de recuento con porcentaje + barra textual
+                # TABLA DE RECUENTO + PORCENTAJES + BARRA VISUAL
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -112,7 +112,7 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
 
-                # Columnas intercaladas de porcentaje y barra
+                # Crea columnas intercaladas: valor, % y barra
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
                 def barra_visual(pct):
@@ -150,39 +150,27 @@ else:
                     mime="application/vnd.ms-excel"
                 )
 
-                # Tabla de importes
                 st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
-                tabla_importes = pd.pivot_table(
-                    df_filtrado,
-                    index="PROVEEDOR",
-                    columns="ESTATUS DE USUARIO",
-                    values="IMPORTE",
-                    aggfunc="sum",
-                    fill_value=0
-                )
+                tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
                 tabla_importes["IMPORTE_TOTAL"] = tabla_importes.sum(axis=1)
                 fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
                 st.dataframe(tabla_importes.style.format("${:,.0f}"), use_container_width=True)
 
-                buffer2 = BytesIO()
-                with pd.ExcelWriter(buffer2, engine='xlsxwriter') as writer:
+                buffer = BytesIO()
+                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                    tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
                     tabla_importes.to_excel(writer, sheet_name="Importes Totales")
                     df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
-                st.download_button(
-                    "📤 Descargar reporte de importes (Excel)",
-                    data=buffer2.getvalue(),
-                    file_name="reporte_importes_mantenimiento_2025.xlsx",
-                    mime="application/vnd.ms-excel"
-                )
+                st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
 
-            # TAB 1: Detalle por Proveedor
+            # ---- Detalle por proveedor
             with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
-                st.dataframe(df_filtrado, use_container_width=True)
+                st.dataframe(df_filtrado)
 
-            # TAB 2: Visualizaciones
+            # ---- Visualizaciones
             with tabs[2]:
                 st.subheader("📈 Órdenes por Estatus")
                 grafico1 = df_filtrado["ESTATUS DE USUARIO"].value_counts().reset_index()
@@ -236,6 +224,7 @@ else:
                 st.subheader("📆 Tendencia diaria de creación de órdenes")
                 df_filtrado["DIA"] = df_filtrado["FECHA DE CREACIÓN"].dt.date
                 tendencia_dia = df_filtrado.groupby("DIA").size().reset_index(name="FOLIOS")
+
                 fig_dia = px.line(
                     tendencia_dia,
                     x="DIA",
@@ -244,18 +233,21 @@ else:
                     title="Tendencia diaria de creación de órdenes",
                     labels={"DIA": "Fecha", "FOLIOS": "Cantidad de Órdenes"}
                 )
+
                 fig_dia.update_traces(
                     text=tendencia_dia["FOLIOS"],
                     textposition="top center",
                     mode="lines+markers+text"
                 )
+
                 fig_dia.update_layout(
                     xaxis=dict(tickformat="%d-%b"),
                     hovermode="x unified"
                 )
+
                 st.plotly_chart(fig_dia, use_container_width=True)
 
-            # TAB 3: Análisis Financiero PEP
+            # ---- Análisis financiero PEP
             with tabs[3]:
                 st.markdown("### 💲 KPIs Financieros")
                 presupuesto_mensual = 4_000_000
@@ -322,7 +314,7 @@ else:
                     ubic_gasto["status"] = ubic_gasto["IMPORTE"].apply(lambda x: "🔥 Excedido" if x > presupuesto_mensual else "✅ OK")
                     st.dataframe(ubic_gasto.sort_values(by="IMPORTE", ascending=False).round(2), use_container_width=True)
 
-            # TAB 4: Metas y Cumplimiento
+            # ---- Metas y cumplimiento
             with tabs[4]:
                 st.subheader("🎯 Evaluación de cumplimiento por estatus de usuario")
                 if "ESTATUS DE USUARIO" in df_filtrado.columns and not df_filtrado.empty:
@@ -339,4 +331,6 @@ else:
                     pivot["% Visa+Auto"] = pivot.get("% VISA", 0) + pivot.get("% AUTO", 0)
                     pivot["Cumple Meta"] = (pivot.get("% ATEN", 0) <= 15) & (pivot["% Visa+Auto"] >= 85)
                     pivot["Cumple Meta"] = pivot["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
-                    columnas_porcentaje = [c for c in pivot
+                    columnas_porcentaje = [c for c in pivot.columns if "%" in c]
+                    pivot[columnas_porcentaje] = pivot[columnas_porcentaje].round(2)
+                    st.dataframe(pivot[[*columnas_porcentaje,
