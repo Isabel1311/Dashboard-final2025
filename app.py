@@ -122,20 +122,6 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                                # --- Tabla de recuento con porcentajes y barras de texto ---
-                tabla_ordenes = pd.pivot_table(
-                    df_filtrado,
-                    index="PROVEEDOR",
-                    columns="ESTATUS DE USUARIO",
-                    values="ORDEN",
-                    aggfunc="count",
-                    fill_value=0
-                )
-                tabla_ordenes["TOTAL_ORDENES"] = tabla_ordenes.sum(axis=1)
-                fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
-                fila_total.index = ["TOTAL GENERAL"]
-                tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
-                
                 # Genera columnas de porcentaje y de barra
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
