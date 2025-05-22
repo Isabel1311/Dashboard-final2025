@@ -333,4 +333,7 @@ else:
                     pivot["Cumple Meta"] = pivot["Cumple Meta"].apply(lambda x: "✅" if x else "❌")
                     columnas_porcentaje = [c for c in pivot.columns if "%" in c]
                     pivot[columnas_porcentaje] = pivot[columnas_porcentaje].round(2)
-                    st.dataframe(pivot[[*columnas_porcentaje,
+                    st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]], use_container_width=True)
+                else:
+                    st.warning("No se encontraron datos suficientes o la columna 'ESTATUS DE USUARIO' no está disponible.")
+
