@@ -90,7 +90,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # Construye la tabla de recuento (pivot)
+                # Calcula la tabla de recuento (pivot original)
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -99,35 +99,38 @@ else:
                     aggfunc="count",
                     fill_value=0
                 )
-
                 tabla_ordenes["TOTAL_ORDENES"] = tabla_ordenes.sum(axis=1)
                 fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
-
-                # Calcula y agrega el porcentaje enseguida de cada estatus
-                cols = []
-                for col in tabla_ordenes.columns:
-                    if col == "TOTAL_ORDENES":
-                        continue
-                    tabla_ordenes[f"% {col}"] = (tabla_ordenes[col] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
-                for col in tabla_ordenes.columns:
-                    if col.startswith('% '):
-                        continue
-                    cols.append(col)
-                    if f"% {col}" in tabla_ordenes.columns:
-                        cols.append(f"% {col}")
-                cols.append("TOTAL_ORDENES")
-                tabla_ordenes = tabla_ordenes[cols]
-
-                # Muestra tabla en Streamlit
+                
+                # Ordena columnas para visualización
+                orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
+                # Intercala columnas originales y de porcentaje
+                cols_intercaladas = []
+                for c in orden:
+                    cols_intercaladas.append(c)
+                    col_pct = f"% {c}"
+                    tabla_ordenes[col_pct] = (tabla_ordenes[c] / tabla_ordenes["TOTAL_ORDENES"] * 100).round(2)
+                    cols_intercaladas.append(col_pct)
+                cols_intercaladas.append("TOTAL_ORDENES")
+                
+                # Reordena
+                tabla_ordenes = tabla_ordenes[cols_intercaladas]
+                
+                # Formatea porcentajes como texto con %
+                def format_col(val, col):
+                    if col.startswith("%"):
+                        return f"{val:.2f}%" if val != 0 else ""
+                    else:
+                        return int(val) if pd.notnull(val) else ""
+                
                 st.dataframe(
-                    tabla_ordenes.style
-                        .format("{:.2f}")
-                        .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
+                    tabla_ordenes.style.format(format_col, subset=tabla_ordenes.columns)
+                    .apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1)
                 )
-
-                # Exporta la tabla a Excel (igualita con porcentajes)
+                
+                # Exportar tabla a Excel igualita
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
