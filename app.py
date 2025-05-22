@@ -135,7 +135,22 @@ else:
                     mime="application/vnd.ms-excel"
                 )
 
+                st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
+                tabla_importes = pd.pivot_table(df_filtrado, index="PROVEEDOR", columns="ESTATUS DE USUARIO", values="IMPORTE", aggfunc="sum", fill_value=0)
+                tabla_importes["IMPORTE_TOTAL"] = tabla_importes.sum(axis=1)
+                fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
+                fila_importe.index = ["TOTAL GENERAL"]
+                tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
+                st.dataframe(tabla_importes.style.format("${:,.0f}").apply(lambda x: ["background-color: #dbeafe; font-weight: bold" if x.name == "TOTAL GENERAL" else "" for _ in x], axis=1))
 
+                buffer = BytesIO()
+                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                    tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
+                    tabla_importes.to_excel(writer, sheet_name="Importes Totales")
+                    df_filtrado.to_excel(writer, sheet_name="Detalle", index=False)
+                st.download_button("📤 Descargar reporte en Excel", data=buffer.getvalue(), file_name="reporte_mantenimiento_2025.xlsx", mime="application/vnd.ms-excel")
+
+            
 # ---- Detalle por proveedor
             with tabs[1]:
                 st.subheader("📋 Detalle completo de Órdenes")
