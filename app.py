@@ -94,7 +94,7 @@ else:
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
-                # TABLA DE RECUENTO (con columnas de porcentaje coloreadas)
+                # --- TABLA DE RECUENTO (solo valores y porcentajes, sin barra) ---
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -108,7 +108,7 @@ else:
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
 
-                # Columnas intercaladas: valor, % (solo porcentajes, sin barra)
+                # Intercalar columnas: valor y porcentaje
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
                 for c in orden:
@@ -120,7 +120,7 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                # Pintar porcentajes en azul (más fuerte si el valor es alto)
+                # Pintar porcentajes (coloreados) y totales en azul claro
                 def color_percent(val):
                     if val == "" or pd.isnull(val):
                         return ""
@@ -174,7 +174,6 @@ else:
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
 
-                # Azul claro SOLO a la fila de totales en importes
                 def row_total_blue_importes(x):
                     return ['background-color: #dbeafe; font-weight: bold' if x.name == "TOTAL GENERAL" else "" for _ in x]
 
