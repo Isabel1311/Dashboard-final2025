@@ -176,7 +176,7 @@ else:
                         f"<div class='kpi-value' style='color:#ea580c'>{ordenes_prom:.2f}</div></div>",
                         unsafe_allow_html=True)
 
-               st.markdown("#### <span style='color:#1e293b'>📊 Tabla de Recuento por Proveedor y Estatus</span>", unsafe_allow_html=True)
+                   st.markdown("#### <span style='color:#1e293b'>📊 Tabla de Recuento por Proveedor y Estatus</span>", unsafe_allow_html=True)
 
                 # --- TABLA DE RECUENTO (solo valores y porcentajes, sin barra) ---
                 tabla_ordenes = pd.pivot_table(
