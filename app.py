@@ -5,129 +5,96 @@ import streamlit as st
 from datetime import datetime
 from io import BytesIO
 
-    # ---- ESTILOS CUSTOM (como Corte de Gestión) ----
 st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
-st.markdown("""
-                    <style>
-                    body, .stApp { background-color: #f5f7fb !important; }
-                    .big-metric { font-size: 2.8rem !important; font-weight: bold; }
-                    .metric-icon { font-size: 2.3rem !important; }
-                    .kpi-block { text-align: center !important; padding: 1.5rem 0; }
-                    .kpi-label { font-size: 1.2rem !important; margin-top: 0.5rem; }
-                    .main-title {
-                        text-align: center;
-                        font-size: 2.4rem;
-                        font-weight: bold;
-                        margin-top: 2rem;
-                        margin-bottom: 0.7rem;
-                        color: #111E33;
-                    }
-                    .subtitle {
-                        text-align: center;
-                        font-size: 1.3rem;
-                        color: #222;
-                        margin-bottom: 1.5rem;
-                    }
-                    .dashboard-box {
-                        background: #192542;
-                        color: #ffb32d;
-                        border-radius: 30px;
-                        display: inline-block;
-                        padding: 1rem 2.5rem;
-                        font-size: 2.1rem;
-                        font-weight: bold;
-                        margin: 1rem auto 2rem auto;
-                        text-align: center;
-                        box-shadow: 0 4px 22px 0 #e3e8ef2f;
-                    }
-                    </style>
-                """, unsafe_allow_html=True)
 
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-                # ---- SIDEBAR: Carga de archivo y filtros ----
-                st.sidebar.title("Filtros y Configuración")
-                archivo = st.sidebar.file_uploader("Carga tu archivo Excel", type=["xlsx"])
-                
-                # ---- BIENVENIDA & TÍTULO PRINCIPAL ----
-                st.markdown("<div class='main-title'>Gestión que transforma, datos que mandan.</div>", unsafe_allow_html=True)
-                st.markdown("<div class='dashboard-box'>Corte de Gestión</div>", unsafe_allow_html=True)
-                
-                if not archivo:
-                    st.info("Por favor, sube tu archivo Excel para comenzar.", icon="📁")
-                    st.stop()
-                
-                # ---- LEE DATOS ----
-                df = pd.read_excel(archivo)
-                df.columns = df.columns.str.strip().str.upper()
-                if "FECHA DE CREACIÓN" in df.columns:
-                    df["FECHA DE CREACIÓN"] = pd.to_datetime(df["FECHA DE CREACIÓN"], errors="coerce")
-                if "IMPORTE" in df.columns:
-                    df["IMPORTE"] = pd.to_numeric(df["IMPORTE"], errors="coerce")
-                
-                # ---- SIDEBAR: Filtros dinámicos ----
-                if "TIPO DE ORDEN" in df.columns:
-                    tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist()
-                    tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=tipo_orden_opts)
-                else:
-                    tipo_orden = []
-                
-                if "FECHA DE CREACIÓN" in df.columns:
-                    anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
-                    anio = st.sidebar.selectbox("Año", sorted(anios_disponibles, reverse=True))
-                    meses = st.sidebar.multiselect("Mes(es)", list(range(1, 13)), default=[datetime.now().month])
-                else:
-                    anio = None
-                    meses = []
-                
-                proveedores = st.sidebar.multiselect("Proveedor", df["PROVEEDOR"].dropna().unique()) if "PROVEEDOR" in df.columns else []
-                estatus_usuario = st.sidebar.multiselect("Estatus de Usuario", df["ESTATUS DE USUARIO"].dropna().unique()) if "ESTATUS DE USUARIO" in df.columns else []
-                
-                # ---- APLICA FILTROS ----
-                df_filtrado = df.copy()
-                if tipo_orden and "TIPO DE ORDEN" in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado["TIPO DE ORDEN"].isin(tipo_orden)]
-                if anio and "FECHA DE CREACIÓN" in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado["FECHA DE CREACIÓN"].dt.year == anio]
-                if meses and "FECHA DE CREACIÓN" in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado["FECHA DE CREACIÓN"].dt.month.isin(meses)]
-                if proveedores and "PROVEEDOR" in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado["PROVEEDOR"].isin(proveedores)]
-                if estatus_usuario and "ESTATUS DE USUARIO" in df_filtrado.columns:
-                    df_filtrado = df_filtrado[df_filtrado["ESTATUS DE USUARIO"].isin(estatus_usuario)]
-                
-                if df_filtrado.empty:
-                    st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
-                    st.stop()
-                
-                # ---- KPIs ARRIBA, SIEMPRE VISIBLES ----
-                col1, col2, col3, col4 = st.columns(4)
+if not st.session_state.authenticated:
+    st.markdown("""
+        <style>
+        .centered-image { display: flex; justify-content: center; margin-top: -40px; }
+        .login-box {
+            background-color: #ffffffdd; padding: 2rem; border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h1 style='text-align: center;'>🔐 Acceso al Dashboard de Mantenimiento Correctivo</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>Por favor, inicia sesión para continuar.</p>", unsafe_allow_html=True)
+
+    with st.form("login"):
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        usuario = st.text_input("Usuario")
+        contraseña = st.text_input("Contraseña", type="password")
+        acceso = st.form_submit_button("Ingresar")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if acceso:
+            if usuario == "admin" and contraseña == "1234":
+                st.session_state.authenticated = True
+                st.success("Bienvenido, acceso concedido.")
+                st.rerun()
+            else:
+                st.error("Credenciales inválidas. Intenta de nuevo.")
+
+else:
+    st.title("🔧 Dashboard de Mantenimiento Correctivo 2025")
+    archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
+
+    if archivo:
+        df = pd.read_excel(archivo)
+        df.columns = df.columns.str.strip().str.upper()
+        df["FECHA DE CREACIÓN"] = pd.to_datetime(df.get("FECHA DE CREACIÓN"), errors="coerce")
+        df["IMPORTE"] = pd.to_numeric(df.get("IMPORTE"), errors="coerce")
+
+        st.sidebar.header("Filtros")
+        tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist() if "TIPO DE ORDEN" in df.columns else []
+        tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=["CORRECTIVO"] if "CORRECTIVO" in tipo_orden_opts else [])
+        anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
+        anio = st.sidebar.selectbox("Año", sorted(anios_disponibles, reverse=True))
+        meses = st.sidebar.multiselect("Mes(es)", list(range(1, 13)), default=[datetime.now().month])
+        proveedores = st.sidebar.multiselect("Proveedor", df["PROVEEDOR"].dropna().unique())
+        estatus_usuario = st.sidebar.multiselect("Estatus de Usuario", df["ESTATUS DE USUARIO"].dropna().unique())
+
+        df_filtrado = df.copy()
+        if tipo_orden:
+            df_filtrado = df_filtrado[df_filtrado["TIPO DE ORDEN"].isin(tipo_orden)]
+        df_filtrado = df_filtrado[(df_filtrado["FECHA DE CREACIÓN"].dt.year == anio) & (df_filtrado["FECHA DE CREACIÓN"].dt.month.isin(meses))]
+        if proveedores:
+            df_filtrado = df_filtrado[df_filtrado["PROVEEDOR"].isin(proveedores)]
+        if estatus_usuario:
+            df_filtrado = df_filtrado[df_filtrado["ESTATUS DE USUARIO"].isin(estatus_usuario)]
+
+        if df_filtrado.empty:
+            st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
+        else:
+            tabs = st.tabs([
+                "📊 Indicadores y Tablas",
+                "📋 Detalle por Proveedor",
+                "📈 Visualizaciones",
+                "🪙 Análisis Financiero PEP",
+                "🎯 Metas y Cumplimiento"
+            ])
+
+            # --- Indicadores y tablas principales
+            with tabs[0]:
+                st.subheader("📌 Indicadores clave del mes")
                 total_ordenes = df_filtrado.shape[0]
-                total_importe = df_filtrado["IMPORTE"].sum() if "IMPORTE" in df_filtrado.columns else 0
-                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax() if "PROVEEDOR" in df_filtrado.columns else ""
-                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique() if "PROVEEDOR" in df_filtrado.columns else 0
-                
-                with col1:
-                    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>🗂</span><br>"
-                                f"<span class='big-metric'>{total_ordenes:,}</span>"
-                                f"<div class='kpi-label'>Total de Órdenes</div></div>", unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>💰</span><br>"
-                                f"<span class='big-metric'>${total_importe:,.0f}</span>"
-                                f"<div class='kpi-label'>Importe Total</div></div>", unsafe_allow_html=True)
-                with col3:
-                    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>🥇</span><br>"
-                                f"<span class='big-metric'>{proveedor_top}</span>"
-                                f"<div class='kpi-label'>Proveedor con Más Órdenes</div></div>", unsafe_allow_html=True)
-                with col4:
-                    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>📊</span><br>"
-                                f"<span class='big-metric'>{ordenes_prom:.2f}</span>"
-                                f"<div class='kpi-label'>Órdenes Promedio</div></div>", unsafe_allow_html=True)
-                
-                st.markdown("---")
+                total_importe = df_filtrado["IMPORTE"].sum()
+                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax()
+                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique()
 
-                # ---- TABLA DE RECUENTO ----
-                st.markdown("### 📊 Tabla de Recuento por Proveedor y Estatus")
-                
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("🗂 Total de Órdenes", f"{total_ordenes:,}")
+                col2.metric("💰 Importe Total", f"${total_importe:,.0f}")
+                col3.metric("🥇 Proveedor con Más Órdenes", proveedor_top)
+                col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
+
+                st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
+
+                # --- TABLA DE RECUENTO (solo valores y porcentajes, sin barra) ---
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -140,7 +107,7 @@ st.markdown("""
                 fila_total = pd.DataFrame(tabla_ordenes.sum(numeric_only=True)).T
                 fila_total.index = ["TOTAL GENERAL"]
                 tabla_ordenes = pd.concat([tabla_ordenes, fila_total])
-                
+
                 # Intercalar columnas: valor y porcentaje
                 orden = [c for c in tabla_ordenes.columns if c != "TOTAL_ORDENES"]
                 cols_intercaladas = []
@@ -152,9 +119,11 @@ st.markdown("""
                     cols_intercaladas.append(col_pct)
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
-                
+
+                # Pintar porcentajes (coloreados) y totales en azul claro
                 def color_percent(val):
-                    if val == "" or pd.isnull(val): return ""
+                    if val == "" or pd.isnull(val):
+                        return ""
                     try:
                         pct = float(str(val).replace("%", ""))
                     except:
@@ -168,18 +137,18 @@ st.markdown("""
                     else:
                         return ""
                 cols_pct = [c for c in tabla_ordenes.columns if c.startswith("%")]
-                
+
                 def row_total_blue(x):
                     return ['background-color: #dbeafe; font-weight: bold' if x.name == "TOTAL GENERAL" else "" for _ in x]
-                
+
                 st.dataframe(
                     tabla_ordenes.style
                         .applymap(color_percent, subset=cols_pct)
                         .apply(row_total_blue, axis=1),
                     use_container_width=True
                 )
-                
-                # ---- EXPORTA TABLA ----
+
+                # Exportar a Excel (sin color, solo datos)
                 buffer = BytesIO()
                 with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
                     tabla_ordenes.to_excel(writer, sheet_name="Recuento Ordenes")
@@ -190,9 +159,8 @@ st.markdown("""
                     file_name="tabla_recuento_coloreada.xlsx",
                     mime="application/vnd.ms-excel"
                 )
-                
-                # ---- TABLA DE IMPORTES ----
-                st.markdown("### 💰 Tabla de Importes por Proveedor y Estatus")
+
+                st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
                 tabla_importes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -205,15 +173,15 @@ st.markdown("""
                 fila_importe = pd.DataFrame(tabla_importes.sum(numeric_only=True)).T
                 fila_importe.index = ["TOTAL GENERAL"]
                 tabla_importes = pd.concat([tabla_importes, fila_importe]).round(2)
-                
+
                 def row_total_blue_importes(x):
                     return ['background-color: #dbeafe; font-weight: bold' if x.name == "TOTAL GENERAL" else "" for _ in x]
-                
+
                 st.dataframe(
                     tabla_importes.style.format("${:,.0f}").apply(row_total_blue_importes, axis=1),
                     use_container_width=True
                 )
-                
+
                 buffer2 = BytesIO()
                 with pd.ExcelWriter(buffer2, engine='xlsxwriter') as writer:
                     tabla_importes.to_excel(writer, sheet_name="Importes Totales")
@@ -396,4 +364,5 @@ st.markdown("""
                     st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]], use_container_width=True)
                 else:
                     st.warning("No se encontraron datos suficientes o la columna 'ESTATUS DE USUARIO' no está disponible.")
+
 
