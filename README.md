@@ -1,34 +1,21 @@
-# Dashboard de Mantenimiento Correctivo
+# Dashboard Mantenimiento Correctivo 2025
 
-Este proyecto es una aplicación interactiva desarrollada con **Streamlit** para visualizar y analizar órdenes de mantenimiento correctivo. Está diseñada para evaluar proveedores, importes, estatus y cumplimiento de metas, todo a través de filtros dinámicos y visualizaciones gráficas.
+Dashboard visual en Streamlit para analizar órdenes de mantenimiento correctivo.  
+**Incluye:** KPIs visuales, filtros avanzados, tablas, gráficas y exportaciones.
 
-## Funcionalidades principales
+## Cómo usar
 
-- Autenticación de acceso
-- Carga de archivo Excel
-- Filtros interactivos por tipo de orden, año, mes, proveedor y estatus
-- KPIs visuales por proveedor
-- Tablas dinámicas con importes y recuento por estatus
-- Gráficos de barras y líneas con etiquetas
-- Exportación de reportes
-- Evaluación automática de cumplimiento por proveedor
+1. Instala las dependencias:
+   ```
+   pip install -r requirements.txt
+   ```
+2. Ejecuta la app:
+   ```
+   streamlit run app.py
+   ```
 
-## Requisitos
-
-Instalar las dependencias necesarias:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Ejecución
-
-Ejecuta la app localmente con:
-
-```bash
-streamlit run app.py
-```
+3. Accede vía navegador en http://localhost:8501
 
 ---
 
-Desarrollado con ❤️ para monitorear y mejorar el desempeño en mantenimiento correctivo.
+**Desarrollado por Lic. Isabel Díaz | M.O.D.E.**
