@@ -377,7 +377,7 @@ else:
 
             # ---- Análisis financiero PEP
             with tabs[3]:
-                st.markdown("### 💲 KPIs Financieros")
+                st.markdown("<h2 style='color:#334155; font-size:2rem; margin-bottom:0.5em;'>💲 KPIs Financieros</h2>", unsafe_allow_html=True)
                 presupuesto_mensual = 4_000_000
                 total_gastado = df_filtrado["IMPORTE"].sum()
                 porcentaje_utilizado = (total_gastado / presupuesto_mensual) * 100 if presupuesto_mensual > 0 else 0
