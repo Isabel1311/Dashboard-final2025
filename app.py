@@ -61,6 +61,23 @@ st.markdown("""
     .stTabs [role="tablist"] {
         gap: 8px !important;
     }
+/* Pinta los títulos y etiquetas de los selectores de blanco en el sidebar */
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] .stSelectbox label,
+section[data-testid="stSidebar"] .stMultiSelect label,
+section[data-testid="stSidebar"] .stTextInput label,
+section[data-testid="stSidebar"] .stNumberInput label,
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] h4,
+section[data-testid="stSidebar"] h5,
+section[data-testid="stSidebar"] h6,
+section[data-testid="stSidebar"] .css-1c7y2kd { /* fallback para algunos labels */
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+
     </style>
 """, unsafe_allow_html=True)
 
