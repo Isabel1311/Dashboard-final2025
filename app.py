@@ -389,13 +389,78 @@ else:
                     df_filtrado.groupby("DENOMINACIÓN DE LA UBICACIÓN TÉCNICA")["IMPORTE"].sum().idxmax()
                     if "DENOMINACIÓN DE LA UBICACIÓN TÉCNICA" in df_filtrado.columns and not df_filtrado.empty else ""
                 )
-
-                kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-                kpi1.metric("💸 Total gastado", f"${total_gastado:,.0f}")
-                kpi2.metric("📊 % presupuesto usado", f"{porcentaje_utilizado:.1f}%")
-                kpi3.metric("🏆 Elemento PEP más costoso", f"{pep_mas_costoso}")
-                kpi4.metric("🔍 Ubicación técnica con mayor gasto", f"{ubicacion_mayor_gasto}")
-
+            # ---- ESTILO PARA CARDS FINANCIEROS ----
+                st.markdown("""
+                <style>
+                .fin-kpi-card {
+                    background: #fff;
+                    border-radius: 20px;
+                    box-shadow: 0 4px 20px #38bdf833;
+                    padding: 24px 20px 18px 24px;
+                    margin-bottom: 12px;
+                    border: 2px solid #e0e7ef;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    min-height: 120px;
+                }
+                .fin-kpi-icon {
+                    font-size: 2.2rem;
+                    margin-bottom: 0.4rem;
+                }
+                .fin-kpi-label {
+                    color: #64748b;
+                    font-size: 1rem;
+                    margin-bottom: 0.3rem;
+                    font-weight: 600;
+                }
+                .fin-kpi-value {
+                    font-size: 2rem;
+                    font-weight: 700;
+                    color: #334155;
+                    margin-bottom: 0;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+            
+                fin_cols = st.columns(4)
+                with fin_cols[0]:
+                    st.markdown(
+                        "<div class='fin-kpi-card'>"
+                        "<div class='fin-kpi-icon'>💸</div>"
+                        "<div class='fin-kpi-label'>Total gastado</div>"
+                        f"<div class='fin-kpi-value'>${total_gastado:,.0f}</div>"
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+                with fin_cols[1]:
+                    st.markdown(
+                        "<div class='fin-kpi-card'>"
+                        "<div class='fin-kpi-icon'>📊</div>"
+                        "<div class='fin-kpi-label'>% presupuesto usado</div>"
+                        f"<div class='fin-kpi-value'>{porcentaje_utilizado:.1f}%</div>"
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+                with fin_cols[2]:
+                    st.markdown(
+                        "<div class='fin-kpi-card'>"
+                        "<div class='fin-kpi-icon'>🏆</div>"
+                        "<div class='fin-kpi-label'>Elemento PEP más costoso</div>"
+                        f"<div class='fin-kpi-value'>{pep_mas_costoso}</div>"
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+                with fin_cols[3]:
+                    st.markdown(
+                        "<div class='fin-kpi-card'>"
+                        "<div class='fin-kpi-icon'>🔍</div>"
+                        "<div class='fin-kpi-label'>Ubicación técnica con mayor gasto</div>"
+                        f"<div class='fin-kpi-value'>{ubicacion_mayor_gasto}</div>"
+                        "</div>",
+                        unsafe_allow_html=True
+                    )
+            
                 if porcentaje_utilizado > 100:
                     st.error("🚨 ¡Se ha excedido el presupuesto mensual!")
                 else:
