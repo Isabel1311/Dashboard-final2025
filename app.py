@@ -5,92 +5,125 @@ import streamlit as st
 from datetime import datetime
 from io import BytesIO
 
+# ---- ESTILOS CUSTOM (como Corte de Gestión) ----
 st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
+st.markdown("""
+    <style>
+    body, .stApp { background-color: #f5f7fb !important; }
+    .big-metric { font-size: 2.8rem !important; font-weight: bold; }
+    .metric-icon { font-size: 2.3rem !important; }
+    .kpi-block { text-align: center !important; padding: 1.5rem 0; }
+    .kpi-label { font-size: 1.2rem !important; margin-top: 0.5rem; }
+    .main-title {
+        text-align: center;
+        font-size: 2.4rem;
+        font-weight: bold;
+        margin-top: 2rem;
+        margin-bottom: 0.7rem;
+        color: #111E33;
+    }
+    .subtitle {
+        text-align: center;
+        font-size: 1.3rem;
+        color: #222;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-box {
+        background: #192542;
+        color: #ffb32d;
+        border-radius: 30px;
+        display: inline-block;
+        padding: 1rem 2.5rem;
+        font-size: 2.1rem;
+        font-weight: bold;
+        margin: 1rem auto 2rem auto;
+        text-align: center;
+        box-shadow: 0 4px 22px 0 #e3e8ef2f;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# ---- SIDEBAR: Carga de archivo y filtros ----
+st.sidebar.title("Filtros y Configuración")
+archivo = st.sidebar.file_uploader("Carga tu archivo Excel", type=["xlsx"])
 
-if not st.session_state.authenticated:
-    st.markdown("""
-        <style>
-        .centered-image { display: flex; justify-content: center; margin-top: -40px; }
-        .login-box {
-            background-color: #ffffffdd; padding: 2rem; border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        </style>
-    """, unsafe_allow_html=True)
+# ---- BIENVENIDA & TÍTULO PRINCIPAL ----
+st.markdown("<div class='main-title'>Gestión que transforma, datos que mandan.</div>", unsafe_allow_html=True)
+st.markdown("<div class='dashboard-box'>Corte de Gestión</div>", unsafe_allow_html=True)
 
-    st.markdown("<h1 style='text-align: center;'>🔐 Acceso al Dashboard de Mantenimiento Correctivo</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Por favor, inicia sesión para continuar.</p>", unsafe_allow_html=True)
+if not archivo:
+    st.info("Por favor, sube tu archivo Excel para comenzar.", icon="📁")
+    st.stop()
 
-    with st.form("login"):
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        usuario = st.text_input("Usuario")
-        contraseña = st.text_input("Contraseña", type="password")
-        acceso = st.form_submit_button("Ingresar")
-        st.markdown('</div>', unsafe_allow_html=True)
+# ---- LEE DATOS ----
+df = pd.read_excel(archivo)
+df.columns = df.columns.str.strip().str.upper()
+if "FECHA DE CREACIÓN" in df.columns:
+    df["FECHA DE CREACIÓN"] = pd.to_datetime(df["FECHA DE CREACIÓN"], errors="coerce")
+if "IMPORTE" in df.columns:
+    df["IMPORTE"] = pd.to_numeric(df["IMPORTE"], errors="coerce")
 
-        if acceso:
-            if usuario == "admin" and contraseña == "1234":
-                st.session_state.authenticated = True
-                st.success("Bienvenido, acceso concedido.")
-                st.rerun()
-            else:
-                st.error("Credenciales inválidas. Intenta de nuevo.")
-
+# ---- SIDEBAR: Filtros dinámicos ----
+if "TIPO DE ORDEN" in df.columns:
+    tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist()
+    tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=tipo_orden_opts)
 else:
-    st.title("🔧 Dashboard de Mantenimiento Correctivo 2025")
-    archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
+    tipo_orden = []
 
-    if archivo:
-        df = pd.read_excel(archivo)
-        df.columns = df.columns.str.strip().str.upper()
-        df["FECHA DE CREACIÓN"] = pd.to_datetime(df.get("FECHA DE CREACIÓN"), errors="coerce")
-        df["IMPORTE"] = pd.to_numeric(df.get("IMPORTE"), errors="coerce")
+if "FECHA DE CREACIÓN" in df.columns:
+    anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
+    anio = st.sidebar.selectbox("Año", sorted(anios_disponibles, reverse=True))
+    meses = st.sidebar.multiselect("Mes(es)", list(range(1, 13)), default=[datetime.now().month])
+else:
+    anio = None
+    meses = []
 
-        st.sidebar.header("Filtros")
-        tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist() if "TIPO DE ORDEN" in df.columns else []
-        tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=["CORRECTIVO"] if "CORRECTIVO" in tipo_orden_opts else [])
-        anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
-        anio = st.sidebar.selectbox("Año", sorted(anios_disponibles, reverse=True))
-        meses = st.sidebar.multiselect("Mes(es)", list(range(1, 13)), default=[datetime.now().month])
-        proveedores = st.sidebar.multiselect("Proveedor", df["PROVEEDOR"].dropna().unique())
-        estatus_usuario = st.sidebar.multiselect("Estatus de Usuario", df["ESTATUS DE USUARIO"].dropna().unique())
+proveedores = st.sidebar.multiselect("Proveedor", df["PROVEEDOR"].dropna().unique()) if "PROVEEDOR" in df.columns else []
+estatus_usuario = st.sidebar.multiselect("Estatus de Usuario", df["ESTATUS DE USUARIO"].dropna().unique()) if "ESTATUS DE USUARIO" in df.columns else []
 
-        df_filtrado = df.copy()
-        if tipo_orden:
-            df_filtrado = df_filtrado[df_filtrado["TIPO DE ORDEN"].isin(tipo_orden)]
-        df_filtrado = df_filtrado[(df_filtrado["FECHA DE CREACIÓN"].dt.year == anio) & (df_filtrado["FECHA DE CREACIÓN"].dt.month.isin(meses))]
-        if proveedores:
-            df_filtrado = df_filtrado[df_filtrado["PROVEEDOR"].isin(proveedores)]
-        if estatus_usuario:
-            df_filtrado = df_filtrado[df_filtrado["ESTATUS DE USUARIO"].isin(estatus_usuario)]
+# ---- APLICA FILTROS ----
+df_filtrado = df.copy()
+if tipo_orden and "TIPO DE ORDEN" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["TIPO DE ORDEN"].isin(tipo_orden)]
+if anio and "FECHA DE CREACIÓN" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["FECHA DE CREACIÓN"].dt.year == anio]
+if meses and "FECHA DE CREACIÓN" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["FECHA DE CREACIÓN"].dt.month.isin(meses)]
+if proveedores and "PROVEEDOR" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["PROVEEDOR"].isin(proveedores)]
+if estatus_usuario and "ESTATUS DE USUARIO" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["ESTATUS DE USUARIO"].isin(estatus_usuario)]
 
-        if df_filtrado.empty:
-            st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
-        else:
-            tabs = st.tabs([
-                "📊 Indicadores y Tablas",
-                "📋 Detalle por Proveedor",
-                "📈 Visualizaciones",
-                "🪙 Análisis Financiero PEP",
-                "🎯 Metas y Cumplimiento"
-            ])
+if df_filtrado.empty:
+    st.warning("⚠️ No hay datos disponibles con los filtros seleccionados.")
+    st.stop()
 
-            # --- Indicadores y tablas principales
-            with tabs[0]:
-                st.subheader("📌 Indicadores clave del mes")
-                total_ordenes = df_filtrado.shape[0]
-                total_importe = df_filtrado["IMPORTE"].sum()
-                proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax()
-                ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique()
+# ---- KPIs ARRIBA, SIEMPRE VISIBLES ----
+col1, col2, col3, col4 = st.columns(4)
+total_ordenes = df_filtrado.shape[0]
+total_importe = df_filtrado["IMPORTE"].sum() if "IMPORTE" in df_filtrado.columns else 0
+proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax() if "PROVEEDOR" in df_filtrado.columns else ""
+ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique() if "PROVEEDOR" in df_filtrado.columns else 0
 
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("🗂 Total de Órdenes", f"{total_ordenes:,}")
-                col2.metric("💰 Importe Total", f"${total_importe:,.0f}")
-                col3.metric("🥇 Proveedor con Más Órdenes", proveedor_top)
-                col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
+with col1:
+    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>🗂</span><br>"
+                f"<span class='big-metric'>{total_ordenes:,}</span>"
+                f"<div class='kpi-label'>Total de Órdenes</div></div>", unsafe_allow_html=True)
+with col2:
+    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>💰</span><br>"
+                f"<span class='big-metric'>${total_importe:,.0f}</span>"
+                f"<div class='kpi-label'>Importe Total</div></div>", unsafe_allow_html=True)
+with col3:
+    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>🥇</span><br>"
+                f"<span class='big-metric'>{proveedor_top}</span>"
+                f"<div class='kpi-label'>Proveedor con Más Órdenes</div></div>", unsafe_allow_html=True)
+with col4:
+    st.markdown(f"<div class='kpi-block'><span class='metric-icon'>📊</span><br>"
+                f"<span class='big-metric'>{ordenes_prom:.2f}</span>"
+                f"<div class='kpi-label'>Órdenes Promedio</div></div>", unsafe_allow_html=True)
+
+st.markdown("---")
+
 
                 st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
 
