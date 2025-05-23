@@ -395,10 +395,10 @@ else:
                 .fin-kpi-card {
                     background: #fff;
                     border-radius: 20px;
-                    box-shadow: 0 4px 20px #38bdf833;
+                    box-shadow: 0 4px 20px #186a99;
                     padding: 24px 20px 18px 24px;
                     margin-bottom: 12px;
-                    border: 2px solid #e0e7ef;
+                    border: 2px solid #bedafa;
                     display: flex;
                     flex-direction: column;
                     align-items: flex-start;
