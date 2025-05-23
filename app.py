@@ -176,9 +176,9 @@ else:
                         f"<div class='kpi-value' style='color:#ea580c'>{ordenes_prom:.2f}</div></div>",
                         unsafe_allow_html=True)
 
-         st.markdown("#### <span style='color:#1e293b'>📊 Tabla de Recuento por Proveedor y Estatus</span>", unsafe_allow_html=True)
+                st.markdown("#### <span style='color:#1e293b'>📊 Tabla de Recuento por Proveedor y Estatus</span>", unsafe_allow_html=True)
 
-                # --- TABLA DE RECUENTO (solo valores y porcentajes, sin barra) ---
+                # --- TABLA DE RECUENTO (sin barra) ---
                 tabla_ordenes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -204,7 +204,6 @@ else:
                 cols_intercaladas.append("TOTAL_ORDENES")
                 tabla_ordenes = tabla_ordenes[cols_intercaladas]
 
-                # Pintar porcentajes (coloreados) y totales en azul claro
                 def color_percent(val):
                     if val == "" or pd.isnull(val):
                         return ""
@@ -244,7 +243,7 @@ else:
                     mime="application/vnd.ms-excel"
                 )
 
-                st.subheader("💰 Tabla de Importes por Proveedor y Estatus")
+                st.markdown("#### <span style='color:#1e293b'>💰 Tabla de Importes por Proveedor y Estatus</span>", unsafe_allow_html=True)
                 tabla_importes = pd.pivot_table(
                     df_filtrado,
                     index="PROVEEDOR",
@@ -448,5 +447,3 @@ else:
                     st.dataframe(pivot[[*columnas_porcentaje, "Cumple Meta"]], use_container_width=True)
                 else:
                     st.warning("No se encontraron datos suficientes o la columna 'ESTATUS DE USUARIO' no está disponible.")
-
-
