@@ -5,43 +5,101 @@ import streamlit as st
 from datetime import datetime
 from io import BytesIO
 
+# ---- CONFIGURACIÓN VISUAL GENERAL ----
 st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
 
+# Estilos globales
+st.markdown("""
+    <style>
+    body {
+        background: linear-gradient(120deg, #e0e7ef 0%, #f1f5f9 100%) !important;
+        font-family: 'Segoe UI', 'Roboto', sans-serif !important;
+    }
+    .main {
+        background: transparent !important;
+    }
+    .stApp {
+        background: linear-gradient(120deg, #e0e7ef 0%, #f1f5f9 100%) !important;
+    }
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background: #1e293b;
+        color: #fff;
+    }
+    .sidebar .sidebar-content { background: #1e293b !important; }
+    /* Tarjetas KPI */
+    .kpi-card {
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 6px 20px #64748b20;
+        padding: 24px 20px 20px 20px;
+        margin-bottom: 20px;
+        border: 3px solid #e0e7ef;
+        transition: border-color 0.6s;
+        animation: borderPulse 2s infinite;
+    }
+    @keyframes borderPulse {
+        0% { border-color: #38bdf8; }
+        50% { border-color: #6366f1; }
+        100% { border-color: #38bdf8; }
+    }
+    .kpi-icon {
+        font-size: 2.7rem;
+        margin-bottom: 0.5rem;
+    }
+    .kpi-label {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 0.4rem;
+    }
+    .kpi-value {
+        font-weight: bold;
+        font-size: 2rem;
+        color: #334155;
+    }
+    /* Tabs más modernos */
+    .stTabs [role="tablist"] {
+        gap: 8px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ---- LOGIN SIMPLE ----
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
     st.markdown("""
-        <style>
-        .centered-image { display: flex; justify-content: center; margin-top: -40px; }
-        .login-box {
-            background-color: #ffffffdd; padding: 2rem; border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        </style>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 85vh;">
+            <div style="background: #fff8; padding: 2.5rem; border-radius: 22px; box-shadow: 0 6px 24px #94a3b820;">
+                <h2 style='text-align: center; color: #1e293b;'>🔐 Acceso al Dashboard</h2>
+                <p style='text-align: center;'>Ingresa tus credenciales para continuar.</p>
+                <form action="" method="post">
     """, unsafe_allow_html=True)
-
-    st.markdown("<h1 style='text-align: center;'>🔐 Acceso al Dashboard de Mantenimiento Correctivo</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Por favor, inicia sesión para continuar.</p>", unsafe_allow_html=True)
-
-    with st.form("login"):
-        st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        usuario = st.text_input("Usuario")
-        contraseña = st.text_input("Contraseña", type="password")
-        acceso = st.form_submit_button("Ingresar")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        if acceso:
-            if usuario == "admin" and contraseña == "1234":
-                st.session_state.authenticated = True
-                st.success("Bienvenido, acceso concedido.")
-                st.rerun()
-            else:
-                st.error("Credenciales inválidas. Intenta de nuevo.")
-
+    usuario = st.text_input("Usuario")
+    contraseña = st.text_input("Contraseña", type="password")
+    acceso = st.button("Ingresar")
+    st.markdown("</form></div></div>", unsafe_allow_html=True)
+    if acceso:
+        if usuario == "admin" and contraseña == "1234":
+            st.session_state.authenticated = True
+            st.success("Bienvenido, acceso concedido.")
+            st.rerun()
+        else:
+            st.error("Credenciales inválidas. Intenta de nuevo.")
 else:
-    st.title("🔧 Dashboard de Mantenimiento Correctivo 2025")
-    archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
+    # ---- SIDEBAR: CARGA Y FILTROS ----
+    with st.sidebar:
+        st.markdown(
+            "<h2 style='color:#38bdf8;margin-bottom:10px;'>🎛️ Filtros y Archivo</h2>",
+            unsafe_allow_html=True
+        )
+        archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
+        st.markdown("---")
+        st.markdown("<small>Powered by Lic. Isabel Díaz | M.O.D.E.</small>", unsafe_allow_html=True)
+
+    st.markdown("<h1 style='color:#2563eb;'>🔧 Dashboard de Mantenimiento Correctivo 2025</h1>", unsafe_allow_html=True)
+    st.write("Visualiza, analiza y exporta la información de mantenimiento como nunca antes. Porque los datos también pueden presumir estilo 😏.")
 
     if archivo:
         df = pd.read_excel(archivo)
@@ -49,7 +107,8 @@ else:
         df["FECHA DE CREACIÓN"] = pd.to_datetime(df.get("FECHA DE CREACIÓN"), errors="coerce")
         df["IMPORTE"] = pd.to_numeric(df.get("IMPORTE"), errors="coerce")
 
-        st.sidebar.header("Filtros")
+        # Sidebar Filtros
+        st.sidebar.header("Filtra tus datos aquí")
         tipo_orden_opts = df["TIPO DE ORDEN"].dropna().unique().tolist() if "TIPO DE ORDEN" in df.columns else []
         tipo_orden = st.sidebar.multiselect("Tipo de orden", tipo_orden_opts, default=["CORRECTIVO"] if "CORRECTIVO" in tipo_orden_opts else [])
         anios_disponibles = df["FECHA DE CREACIÓN"].dt.year.dropna().unique()
@@ -58,6 +117,7 @@ else:
         proveedores = st.sidebar.multiselect("Proveedor", df["PROVEEDOR"].dropna().unique())
         estatus_usuario = st.sidebar.multiselect("Estatus de Usuario", df["ESTATUS DE USUARIO"].dropna().unique())
 
+        # Aplicar filtros
         df_filtrado = df.copy()
         if tipo_orden:
             df_filtrado = df_filtrado[df_filtrado["TIPO DE ORDEN"].isin(tipo_orden)]
@@ -78,21 +138,45 @@ else:
                 "🎯 Metas y Cumplimiento"
             ])
 
-            # --- Indicadores y tablas principales
+            # --- INDICADORES MODERNOS
             with tabs[0]:
-                st.subheader("📌 Indicadores clave del mes")
+                st.markdown("### <span style='color:#1e293b'>📌 KPIs clave del mes</span>", unsafe_allow_html=True)
                 total_ordenes = df_filtrado.shape[0]
                 total_importe = df_filtrado["IMPORTE"].sum()
                 proveedor_top = df_filtrado["PROVEEDOR"].value_counts().idxmax()
                 ordenes_prom = total_ordenes / df_filtrado["PROVEEDOR"].nunique()
 
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("🗂 Total de Órdenes", f"{total_ordenes:,}")
-                col2.metric("💰 Importe Total", f"${total_importe:,.0f}")
-                col3.metric("🥇 Proveedor con Más Órdenes", proveedor_top)
-                col4.metric("📊 Órdenes Promedio", f"{ordenes_prom:.2f}")
+                kpi_cols = st.columns(4)
+                with kpi_cols[0]:
+                    st.markdown(
+                        "<div class='kpi-card'>"
+                        "<div class='kpi-icon'>📋</div>"
+                        "<div class='kpi-label'>Total de Órdenes</div>"
+                        f"<div class='kpi-value'>{total_ordenes:,}</div></div>",
+                        unsafe_allow_html=True)
+                with kpi_cols[1]:
+                    st.markdown(
+                        "<div class='kpi-card'>"
+                        "<div class='kpi-icon'>💰</div>"
+                        "<div class='kpi-label'>Importe Total</div>"
+                        f"<div class='kpi-value' style='color: #188038;'>${total_importe:,.0f}</div></div>",
+                        unsafe_allow_html=True)
+                with kpi_cols[2]:
+                    st.markdown(
+                        "<div class='kpi-card'>"
+                        "<div class='kpi-icon'>🥇</div>"
+                        "<div class='kpi-label'>Proveedor con Más Órdenes</div>"
+                        f"<div class='kpi-value' style='color:#6366f1'>{proveedor_top}</div></div>",
+                        unsafe_allow_html=True)
+                with kpi_cols[3]:
+                    st.markdown(
+                        "<div class='kpi-card'>"
+                        "<div class='kpi-icon'>📊</div>"
+                        "<div class='kpi-label'>Órdenes Promedio</div>"
+                        f"<div class='kpi-value' style='color:#ea580c'>{ordenes_prom:.2f}</div></div>",
+                        unsafe_allow_html=True)
 
-                st.subheader("📊 Tabla de Recuento por Proveedor y Estatus")
+                st.markdown("#### <span style='color:#1e293b'>📊 Tabla de Recuento por Proveedor y Estatus</span>", unsafe_allow_html=True)
 
                 # --- TABLA DE RECUENTO (solo valores y porcentajes, sin barra) ---
                 tabla_ordenes = pd.pivot_table(
