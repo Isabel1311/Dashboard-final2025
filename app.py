@@ -410,8 +410,8 @@ else:
                 }
                 .fin-kpi-label {
                     color: #64748b;
-                    font-size: 3rem;
-                    margin-bottom: 0.5rem;
+                    font-size: 1rem;
+                    margin-bottom: 0.2rem;
                     font-weight: 600;
                 }
                 .fin-kpi-value {
