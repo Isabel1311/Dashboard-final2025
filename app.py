@@ -405,7 +405,7 @@ else:
                     min-height: 120px;
                 }
                 .fin-kpi-icon {
-                    font-size: 2.2rem;
+                    font-size: 3.3rem;
                     margin-bottom: 0.4rem;
                 }
                 .fin-kpi-label {
