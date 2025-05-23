@@ -6,8 +6,8 @@ from datetime import datetime
 from io import BytesIO
 
     # ---- ESTILOS CUSTOM (como Corte de Gestión) ----
-  st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
-  st.markdown("""
+st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
+st.markdown("""
                     <style>
                     body, .stApp { background-color: #f5f7fb !important; }
                     .big-metric { font-size: 2.8rem !important; font-weight: bold; }
