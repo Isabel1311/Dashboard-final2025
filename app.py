@@ -5,9 +5,9 @@ import streamlit as st
 from datetime import datetime
 from io import BytesIO
 
-                # ---- ESTILOS CUSTOM (como Corte de Gestión) ----
-                st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
-                st.markdown("""
+    # ---- ESTILOS CUSTOM (como Corte de Gestión) ----
+  st.set_page_config(page_title="Dashboard Mantenimiento Correctivo", layout="wide")
+  st.markdown("""
                     <style>
                     body, .stApp { background-color: #f5f7fb !important; }
                     .big-metric { font-size: 2.8rem !important; font-weight: bold; }
@@ -42,7 +42,8 @@ from io import BytesIO
                     }
                     </style>
                 """, unsafe_allow_html=True)
-                
+
+
                 # ---- SIDEBAR: Carga de archivo y filtros ----
                 st.sidebar.title("Filtros y Configuración")
                 archivo = st.sidebar.file_uploader("Carga tu archivo Excel", type=["xlsx"])
