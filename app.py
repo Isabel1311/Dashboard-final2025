@@ -113,7 +113,7 @@ else:
         )
         archivo = st.file_uploader("Sube tu archivo Excel", type=[".xlsx"])
         st.markdown("---")
-        st.markdown("<small>Powered by Lic. Isabel Díaz | M.O.D.E.</small>", unsafe_allow_html=True)
+        st.markdown("<small></small>", unsafe_allow_html=True)
 
     st.markdown("<h1 style='color:#2563eb;'>🔧 Dashboard de Mantenimiento Correctivo 2025</h1>", unsafe_allow_html=True)
     st.write("Visualiza, analiza y exporta la información de mantenimiento como nunca antes.")
