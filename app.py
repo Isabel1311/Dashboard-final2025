@@ -116,7 +116,7 @@ else:
         st.markdown("<small>Powered by Lic. Isabel Díaz | M.O.D.E.</small>", unsafe_allow_html=True)
 
     st.markdown("<h1 style='color:#2563eb;'>🔧 Dashboard de Mantenimiento Correctivo 2025</h1>", unsafe_allow_html=True)
-    st.write("Visualiza, analiza y exporta la información de mantenimiento como nunca antes. Porque los datos también pueden presumir estilo 😏.")
+    st.write("Visualiza, analiza y exporta la información de mantenimiento como nunca antes.")
 
     if archivo:
         df = pd.read_excel(archivo)
