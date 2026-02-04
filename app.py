@@ -98,7 +98,7 @@ if not st.session_state.authenticated:
     acceso = st.button("Ingresar")
     st.markdown("</form></div></div>", unsafe_allow_html=True)
     if acceso:
-        if usuario == "admin" and contraseña == "1234":
+        if usuario == "admin" and contraseña == "12345":
             st.session_state.authenticated = True
             st.success("Bienvenido, acceso concedido.")
             st.rerun()
